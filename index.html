@@ -591,10 +591,205 @@
       Sun: { focus: 'Rest / Off', exercises: [] },
     };
 
-    const HISTORY_DATA = [];
+    const HISTORY_DATA = [
+      {
+        date: '2026-01-13',
+        sessions: [{ day: 'Tue', exercises: [
+          { name: 'Trap Bar Deadlift', sets: 3, reps: '5', load: '115', rpe: '6', hitTarget: 'Yes', notes: 'Warmup 45×5, 95×5' },
+          { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hamstring Curl', sets: 2, reps: '10', load: '70', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '50', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-01-14',
+        sessions: [{ day: 'Wed', exercises: [
+          { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '115', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Incline DB Press', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '90', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Bicep Curl', sets: 2, reps: '10', load: '20', rpe: '6', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-01-20',
+        sessions: [{ day: 'Tue', exercises: [
+          { name: 'Trap Bar Deadlift', sets: 3, reps: '5', load: '135', rpe: '6', hitTarget: 'Yes', notes: 'Warmup 45×5, 95×5' },
+          { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hamstring Curl', sets: 2, reps: '10', load: '90', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '50', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-01-21',
+        sessions: [{ day: 'Wed', exercises: [
+          { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '135', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Incline DB Press', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '90', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Bicep Curl', sets: 2, reps: '10', load: '25', rpe: '6', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-01-22',
+        sessions: [{ day: 'Thu', exercises: [
+          { name: 'Goblet Squat (pause)', sets: 3, reps: '8', load: '50', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Step-Ups (DBs)', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Reverse Hyper / 45° Back Ext', sets: 2, reps: '10', load: 'BW', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Standing Calf Raise', sets: 2, reps: '10', load: '180', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Palloff Press', sets: 2, reps: '8', load: '10', rpe: '6.5', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-01-23',
+        sessions: [{ day: 'Fri', exercises: [
+          { name: 'DB Overhead Press', sets: 3, reps: '5', load: '30', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Assisted Pullups', sets: 3, reps: '6', load: '70', rpe: '6.5', hitTarget: 'No' },
+          { name: 'Face Pulls', sets: 3, reps: '12', load: '15', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Lateral Raise', sets: 3, reps: '10', load: '10', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Farmers Carry', sets: 2, reps: '45s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Suitcase Carry', sets: 3, reps: '30s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-02',
+        sessions: [{ day: 'Mon', exercises: [
+          { name: 'Trap Bar Deadlift', sets: 3, reps: '5', load: '155', rpe: '6', hitTarget: 'Yes', notes: 'Warmup 45×5, 95×5' },
+          { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hamstring Curl', sets: 2, reps: '10', load: '90', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '50', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-03',
+        sessions: [{ day: 'Tue', exercises: [
+          { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '155', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Incline DB Press', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '100', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Bicep Curl', sets: 2, reps: '10', load: '20', rpe: '6', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-05',
+        sessions: [{ day: 'Thu', exercises: [
+          { name: 'Squat', sets: 3, reps: '5', load: '135', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Step-Ups (DBs)', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Reverse Hyper / 45° Back Ext', sets: 2, reps: '10', load: 'BW', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Standing Calf Raise', sets: 2, reps: '10', load: '200', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Palloff Press', sets: 2, reps: '8', load: '10', rpe: '6.5', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-09',
+        sessions: [{ day: 'Mon', exercises: [
+          { name: 'DB Overhead Press', sets: 3, reps: '5', load: '35', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Assisted Pullups', sets: 3, reps: '6', load: '70', rpe: '6.5', hitTarget: 'No' },
+          { name: 'Face Pulls', sets: 3, reps: '12', load: '15', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Lateral Raise', sets: 3, reps: '10', load: '10', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Farmers Carry', sets: 2, reps: '45s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Suitcase Carry', sets: 3, reps: '30s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-10',
+        sessions: [{ day: 'Tue', exercises: [
+          { name: 'Trap Bar Deadlift', sets: 3, reps: '5', load: '175', rpe: '6', hitTarget: 'Yes', notes: 'Warmup 45×5, 95×5' },
+          { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hamstring Curl', sets: 2, reps: '10', load: '100', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '50', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-12',
+        sessions: [{ day: 'Thu', exercises: [
+          { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '175', rpe: '6', hitTarget: 'No' },
+          { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '35', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Incline DB Press', sets: 3, reps: '8', load: '35', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '100', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Bicep Curl', sets: 2, reps: '10', load: '25', rpe: '6', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-13',
+        sessions: [{ day: 'Fri', exercises: [
+          { name: 'Squat', sets: 3, reps: '5', load: '155', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Step-Ups (DBs)', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Reverse Hyper / 45° Back Ext', sets: 2, reps: '10', load: 'BW', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Standing Calf Raise', sets: 2, reps: '10', load: '220', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Palloff Press', sets: 2, reps: '8', load: '17.5', rpe: '6.5', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-16',
+        sessions: [{ day: 'Mon', exercises: [
+          { name: 'DB Overhead Press', sets: 3, reps: '5', load: '40', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Assisted Pullups', sets: 3, reps: '6', load: '70', rpe: '6.5', hitTarget: 'No' },
+          { name: 'Face Pulls', sets: 3, reps: '12', load: '22.5', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Lateral Raise', sets: 3, reps: '10', load: '10', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Farmers Carry', sets: 2, reps: '45s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Suitcase Carry', sets: 3, reps: '30s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-17',
+        sessions: [{ day: 'Tue', exercises: [
+          { name: 'Deadlift', sets: 3, reps: '5', load: '175', rpe: '6', hitTarget: 'No', notes: '1 set @ 155' },
+          { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Hamstring Curl', sets: 2, reps: '8', load: '110', rpe: '6.5', hitTarget: 'No', notes: 'Needed 2x10' },
+          { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '65', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-19',
+        sessions: [{ day: 'Thu', exercises: [
+          { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '175', rpe: '6', hitTarget: 'Yes' },
+          { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '40', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Incline DB Press', sets: 3, reps: '8', load: '40', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '110', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Bicep Curl', sets: 2, reps: '10', load: '25', rpe: '6', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-20',
+        sessions: [{ day: 'Fri', exercises: [
+          { name: 'Squat', sets: 3, reps: '5', load: '205', rpe: '6', hitTarget: 'No' },
+          { name: 'Step-Ups (DBs)', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Reverse Hyper / 45° Back Ext', sets: 2, reps: '10', load: 'BW', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Standing Calf Raise', sets: 2, reps: '12', load: '220', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Palloff Press', sets: 2, reps: '8', load: '22.5', rpe: '6.5', hitTarget: 'Yes' },
+        ]}]
+      },
+      {
+        date: '2026-02-23',
+        sessions: [{ day: 'Mon', exercises: [
+          { name: 'DB Overhead Press', sets: 3, reps: '5', load: '40', rpe: '7', hitTarget: 'Yes' },
+          { name: 'Assisted Pullups', sets: 3, reps: '6', load: '60', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Face Pulls', sets: 3, reps: '12', load: '22.5', rpe: '7', hitTarget: 'Yes' },
+          { name: 'Lateral Raise', sets: 3, reps: '12', load: '10', rpe: '7', hitTarget: 'Yes' },
+          { name: 'Farmers Carry', sets: 2, reps: '45s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+          { name: 'Suitcase Carry', sets: 3, reps: '40s', load: '45', rpe: '6.5', hitTarget: 'Yes', notes: '2 20s intervals per set' },
+        ]}]
+      },
+      {
+        date: '2026-02-24',
+        sessions: [{ day: 'Tue', exercises: [
+          { name: 'Trap Bar Deadlift', sets: 3, reps: '5', load: '155', rpe: '7', hitTarget: 'Yes' },
+          { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '25', rpe: '7.5', hitTarget: 'Yes' },
+          { name: 'Hamstring Curl', sets: 2, reps: '10', load: '100', rpe: '7.5', hitTarget: 'Yes' },
+          { name: 'Romanian Deadlift', sets: 3, reps: '8', load: '95', rpe: '7', hitTarget: 'Yes' },
+          { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' },
+        ]}]
+      },
+    ];
+    // Note: the Jan 21 Wed session uses corrected date per CSV (was listed as 2026-01-14 Wk2 in spreadsheet).
     /*
-      // Sample data removed — all sessions now live in localStorage only.
-      // Use "Export Backup (JSON)" on the Progress tab to back up your data.
+      // Legacy commented block — superseded by real CSV data above.
       {
         date: '2026-01-14',
         sessions: [{
