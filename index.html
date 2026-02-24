@@ -1211,15 +1211,36 @@
       return Object.values(exerciseMap).sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    function saveSession(date, day, exercises, notes) {
+    function saveSession(date, day, exercises, notes, tag) {
       const sessions = getAllSessions();
       const dateStr = (date instanceof Date) ? date.toISOString().split('T')[0] : date;
       const sessionObj = { day, exercises };
       if (notes && notes.trim()) sessionObj.notes = notes.trim();
+      if (tag && tag.trim()) sessionObj.tag = tag.trim();
       const idx = sessions.findIndex(s => s.date === dateStr);
       if (idx >= 0) sessions[idx].sessions = [sessionObj];
       else sessions.push({ date: dateStr, sessions: [sessionObj] });
       lsSet('wt_sessions', sessions);
+    }
+
+    // Auto-detect workout type from exercise names
+    function detectWorkoutType(exercises) {
+      if (!exercises || exercises.length === 0) return null;
+      const names = exercises.map(e => (e.name || '').toLowerCase()).join(' ');
+      const lower = /deadlift|squat|hip thrust|glute|hamstring|leg curl|leg press|rdl|romanian|calf|lunge|split squat|step.?up|goblet/.test(names);
+      const upper = /bench|row|press|pull.?up|pullup|chin.?up|lat pulldown|bicep|tricep|curl|fly|dip|overhead|ohp|face pull|lateral raise|shoulder/.test(names);
+      const carry = /carry|farmer|suitcase|loaded/.test(names);
+      if (lower && upper) return 'Full Body';
+      if (lower) return 'Lower';
+      if (upper) return 'Upper';
+      if (carry) return 'Carries';
+      return 'Other';
+    }
+
+    // Get the display tag for a session (manual tag takes priority, then auto-detect)
+    function getSessionTag(sess) {
+      if (sess.tag && sess.tag.trim()) return sess.tag.trim();
+      return detectWorkoutType(sess.exercises);
     }
 
     // ============================================
@@ -1646,6 +1667,7 @@
       const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).substring(0, 3);
       const [exercises, setExercises] = useState([]);
       const [notes, setNotes] = useState('');
+      const [tag, setTag] = useState('');
       const [saved, setSaved] = useState(false);
       const prevSetsKey = useRef('');
       const autoLoadDone = useRef(false);
@@ -1764,10 +1786,10 @@
           hitTarget: ex.hitTarget,
           notes: ex.notes
         }));
-        saveSession(now, dayName, sessionExercises, notes);
+        saveSession(now, dayName, sessionExercises, notes, tag);
         advanceToNextWorkout();
         setSaved(true);
-        setTimeout(() => { setSaved(false); setExercises([]); setNotes(''); }, 1800);
+        setTimeout(() => { setSaved(false); setExercises([]); setNotes(''); setTag(''); }, 1800);
       };
 
       // Per-set hit indicator
@@ -1894,10 +1916,17 @@
 
               <button className="quick-add-btn" onClick={handleAddExercise}>+ Add Exercise</button>
 
-              <div style={{ marginBottom: 12 }}>
-                <label className="label">Session Notes</label>
-                <input type="text" className="input" placeholder="How did it feel?"
-                  value={notes} onChange={e => setNotes(e.target.value)} />
+              <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label className="label">Session Notes</label>
+                  <input type="text" className="input" style={{ marginBottom: 0 }} placeholder="How did it feel?"
+                    value={notes} onChange={e => setNotes(e.target.value)} />
+                </div>
+                <div style={{ width: 110 }}>
+                  <label className="label">Tag <span style={{ color: 'var(--muted2)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
+                  <input type="text" className="input" style={{ marginBottom: 0 }} placeholder="e.g. Lower A"
+                    value={tag} onChange={e => setTag(e.target.value)} />
+                </div>
               </div>
 
               {saveError && (
@@ -2040,64 +2069,182 @@
       );
     }
 
+    const TYPE_COLORS = {
+      'Lower':     { bg: 'rgba(107,143,110,0.18)', color: 'var(--success)' },
+      'Upper':     { bg: 'rgba(122,156,191,0.18)', color: '#7A9CBF' },
+      'Full Body': { bg: 'rgba(212,168,67,0.18)',  color: 'var(--warning)' },
+      'Carries':   { bg: 'rgba(184,112,160,0.18)', color: '#B870A0' },
+      'Other':     { bg: 'rgba(160,152,144,0.18)', color: 'var(--muted)' },
+    };
+
+    function TypeBadge({ tag }) {
+      const style = TYPE_COLORS[tag] || TYPE_COLORS['Other'];
+      return (
+        <span style={{
+          background: style.bg, color: style.color,
+          borderRadius: 4, padding: '2px 7px',
+          fontSize: 10, fontWeight: 700,
+          textTransform: 'uppercase', letterSpacing: '0.5px',
+          flexShrink: 0,
+        }}>{tag}</span>
+      );
+    }
+
+    function FilterPills({ options, value, onChange, allLabel }) {
+      return (
+        <div style={{
+          display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2,
+          scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
+        }}>
+          {[{ id: null, label: allLabel || 'All' }, ...options].map(opt => {
+            const active = value === opt.id;
+            return (
+              <button key={opt.id ?? '__all'} onClick={() => onChange(active ? null : opt.id)}
+                style={{
+                  flexShrink: 0, padding: '5px 12px', borderRadius: 20,
+                  border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                  background: active ? 'var(--accent-dim)' : 'var(--surface2)',
+                  color: active ? 'var(--accent)' : 'var(--muted)',
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: 'var(--sans)', whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                }}>
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
     function HistoryScreen({ onViewDetail, onLogPast }) {
+      const [monthFilter, setMonthFilter] = useState(null);
+      const [typeFilter, setTypeFilter] = useState(null);
+
       const allSessions = [...HISTORY_DATA, ...getAllSessions()].sort((a, b) => new Date(b.date) - new Date(a.date));
-      const grouped = {};
-      allSessions.forEach(s => {
-        if (!grouped[s.date]) grouped[s.date] = [];
-        grouped[s.date].push(...(s.sessions || []));
+
+      // Flatten all sessions with their date and derived type
+      const flat = allSessions.flatMap(s =>
+        (s.sessions || []).map(sess => ({
+          date: s.date,
+          sess,
+          monthKey: s.date.substring(0, 7), // 'YYYY-MM'
+          type: getSessionTag(sess),
+        }))
+      );
+
+      // Build month options from actual data
+      const monthKeys = [...new Set(flat.map(f => f.monthKey))].sort((a, b) => b.localeCompare(a));
+      const monthOptions = monthKeys.map(k => {
+        const d = new Date(k + '-15');
+        return { id: k, label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) };
       });
+
+      // Build type options from actual data
+      const typeKeys = [...new Set(flat.map(f => f.type).filter(Boolean))].sort();
+      const typeOptions = typeKeys.map(t => ({ id: t, label: t }));
+
+      // Apply filters
+      const filtered = flat.filter(f => {
+        if (monthFilter && f.monthKey !== monthFilter) return false;
+        if (typeFilter && f.type !== typeFilter) return false;
+        return true;
+      });
+
+      // Re-group for display
+      const grouped = {};
+      filtered.forEach(({ date, sess }) => {
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(sess);
+      });
+      const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+      const hasFilters = monthFilter || typeFilter;
 
       return (
         <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingTop: 8 }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingTop: 8 }}>
             <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--text)' }}>History</div>
-            <button className="btn btn-secondary btn-small" onClick={onLogPast}>+ Past Workout</button>
+            <button className="btn btn-secondary btn-small" onClick={onLogPast}>+ Past</button>
           </div>
-          {Object.entries(grouped).length === 0 && (
-            <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <div style={{ fontSize: 28, marginBottom: 10 }}>📋</div>
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>No sessions yet</div>
-              <div style={{ color: 'var(--muted)', fontSize: 13 }}>Log a session to see it here.</div>
+
+          {/* Filters */}
+          {flat.length > 0 && (
+            <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <FilterPills options={monthOptions} value={monthFilter} onChange={setMonthFilter} allLabel="All Months" />
+              <FilterPills options={typeOptions} value={typeFilter} onChange={setTypeFilter} allLabel="All Types" />
             </div>
           )}
-          {Object.entries(grouped).map(([date, sessions]) => (
-            <div key={date} className="history-date-group">
-              <div className="history-date">{formatDate(new Date(date + 'T12:00:00'))}</div>
-              {sessions.map((sess, i) => (
-                <div key={i} className="history-session tappable-card"
-                  onClick={() => onViewDetail && onViewDetail(date, sess)}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className="session-day">{sess.day}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
-                        {sess.exercises ? sess.exercises.length : 0} exs
+
+          {/* Active filter summary */}
+          {hasFilters && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>
+                {filtered.length} session{filtered.length !== 1 ? 's' : ''}
+              </div>
+              <button onClick={() => { setMonthFilter(null); setTypeFilter(null); }}
+                style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+                Clear filters
+              </button>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {sortedDates.length === 0 && (
+            <div className="card" style={{ textAlign: 'center', padding: '32px 20px' }}>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>{hasFilters ? '🔍' : '📋'}</div>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>{hasFilters ? 'No matches' : 'No sessions yet'}</div>
+              <div style={{ color: 'var(--muted)', fontSize: 13 }}>
+                {hasFilters ? 'Try adjusting your filters.' : 'Log a session to see it here.'}
+              </div>
+            </div>
+          )}
+
+          {/* Session list */}
+          {sortedDates.map(date => (
+            <div key={date} style={{ marginBottom: 16 }}>
+              <div className="history-date" style={{ marginBottom: 6 }}>
+                {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+              {grouped[date].map((sess, i) => {
+                const tag = getSessionTag(sess);
+                const totalSets = (sess.exercises || []).reduce((s, e) => s + (parseInt(e.sets) || 0), 0);
+                return (
+                  <div key={i} className="history-session tappable-card"
+                    onClick={() => onViewDetail && onViewDetail(date, sess)}
+                    style={{ padding: '11px 14px', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div className="session-day" style={{ marginBottom: 0 }}>{sess.day}</div>
+                        {tag && <TypeBadge tag={tag} />}
                       </div>
-                      <div style={{ color: 'var(--accent)', fontSize: 14, fontWeight: 600 }}>›</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
+                          {(sess.exercises || []).length}ex · {totalSets}sets
+                        </div>
+                        <div style={{ color: 'var(--accent)', fontSize: 14, fontWeight: 600 }}>›</div>
+                      </div>
                     </div>
+                    {sess.exercises && sess.exercises.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {sess.exercises.slice(0, 4).map((ex, j) => (
+                          <span key={j} style={{
+                            background: 'var(--surface3)', borderRadius: 4,
+                            padding: '2px 7px', fontSize: 11, color: 'var(--muted)', fontWeight: 500
+                          }}>{ex.name}</span>
+                        ))}
+                        {sess.exercises.length > 4 && (
+                          <span style={{
+                            background: 'var(--surface3)', borderRadius: 4,
+                            padding: '2px 7px', fontSize: 11, color: 'var(--muted2)', fontWeight: 500
+                          }}>+{sess.exercises.length - 4} more</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {sess.exercises && sess.exercises.length > 0 && (
-                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {sess.exercises.slice(0, 4).map((ex, j) => (
-                        <span key={j} style={{
-                          background: 'var(--surface3)', borderRadius: 4,
-                          padding: '2px 8px', fontSize: 11, color: 'var(--muted)', fontWeight: 500
-                        }}>
-                          {ex.name}
-                        </span>
-                      ))}
-                      {sess.exercises.length > 4 && (
-                        <span style={{
-                          background: 'var(--surface3)', borderRadius: 4,
-                          padding: '2px 8px', fontSize: 11, color: 'var(--muted2)', fontWeight: 500
-                        }}>
-                          +{sess.exercises.length - 4} more
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           ))}
         </div>
@@ -2107,39 +2254,43 @@
     // ─── History Detail ───
 
     function HistoryDetailScreen({ date, session, onBack }) {
-      const dateStr = formatDate(new Date(date + 'T12:00:00'));
+      const dateStr = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
       const exercises = session.exercises || [];
       const totalSets = exercises.reduce((s, e) => s + (parseInt(e.sets) || 0), 0);
+      const tag = getSessionTag(session);
 
       return (
         <div className="editor-screen">
           <div className="editor-header">
             <button className="back-btn" onClick={onBack}>← Back</button>
-            <div className="editor-title">{session.day}</div>
+            <div className="editor-title" style={{ fontSize: 15 }}>{dateStr}</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', padding: '8px 4px', fontFamily: 'var(--mono)' }}>
-              {exercises.length}ex
+              {exercises.length}ex · {totalSets}s
             </div>
           </div>
           <div className="editor-content">
 
             {/* Session header */}
-            <div className="card" style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, color: 'var(--muted2)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>
-                {dateStr}
+            <div className="card" style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.4px' }}>{session.day}</div>
+                {tag && <TypeBadge tag={tag} />}
               </div>
-              <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 12 }}>
-                {session.day}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="stat-card" style={{ padding: '12px' }}>
-                  <div className="stat-value" style={{ fontSize: 22 }}>{exercises.length}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="stat-card" style={{ padding: '10px 12px' }}>
+                  <div className="stat-value" style={{ fontSize: 20 }}>{exercises.length}</div>
                   <div className="stat-label">Exercises</div>
                 </div>
-                <div className="stat-card" style={{ padding: '12px' }}>
-                  <div className="stat-value" style={{ fontSize: 22 }}>{totalSets}</div>
+                <div className="stat-card" style={{ padding: '10px 12px' }}>
+                  <div className="stat-value" style={{ fontSize: 20 }}>{totalSets}</div>
                   <div className="stat-label">Total Sets</div>
                 </div>
               </div>
+              {session.notes && (
+                <div style={{ marginTop: 10, fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+                  {session.notes}
+                </div>
+              )}
             </div>
 
             {exercises.map((ex, i) => (
@@ -2421,6 +2572,7 @@
         { name: '', sets: 3, reps: '', load: '', rpe: '', hitTarget: 'Yes', notes: '' }
       ]);
       const [sessionNotes, setSessionNotes] = useState('');
+      const [sessionTag, setSessionTag] = useState('');
       const [saved, setSaved] = useState(false);
 
       const dayName = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }).substring(0, 3);
@@ -2442,7 +2594,7 @@
       const handleSave = () => {
         const valid = exercises.filter(ex => ex.name.trim());
         if (valid.length === 0) return;
-        saveSession(date, dayName, valid, sessionNotes);
+        saveSession(date, dayName, valid, sessionNotes, sessionTag);
         setSaved(true);
         setTimeout(onBack, 700);
       };
@@ -2536,10 +2688,17 @@
 
             <button className="quick-add-btn" onClick={addExercise}>+ Add Exercise</button>
 
-            <div style={{ marginBottom: 16 }}>
-              <label className="label">Session Notes</label>
-              <input type="text" className="input" placeholder="How did it feel?"
-                value={sessionNotes} onChange={e => setSessionNotes(e.target.value)} />
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+              <div style={{ flex: 1 }}>
+                <label className="label">Session Notes</label>
+                <input type="text" className="input" style={{ marginBottom: 0 }} placeholder="How did it feel?"
+                  value={sessionNotes} onChange={e => setSessionNotes(e.target.value)} />
+              </div>
+              <div style={{ width: 110 }}>
+                <label className="label">Tag <span style={{ color: 'var(--muted2)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
+                <input type="text" className="input" style={{ marginBottom: 0 }} placeholder="e.g. Lower A"
+                  value={sessionTag} onChange={e => setSessionTag(e.target.value)} />
+              </div>
             </div>
 
             <button
