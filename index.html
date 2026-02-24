@@ -1,0 +1,2926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Workout Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Reset ─── */
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+
+    /* ─── Design Tokens ─── */
+    :root {
+      --bg:          #1A1A1A;
+      --surface:     #232120;
+      --surface2:    #2C2A28;
+      --surface3:    #373432;
+      --text:        #F0EDE8;
+      --muted:       #A09890;
+      --muted2:      #635E59;
+      --accent:      #E07B39;
+      --accent-glow: rgba(224, 123, 57, 0.28);
+      --accent-dim:  rgba(224, 123, 57, 0.12);
+      --success:     #6B8F6E;
+      --success-dim: rgba(107, 143, 110, 0.15);
+      --danger:      #BF5048;
+      --warning:     #D4A843;
+      --border:      rgba(255, 255, 255, 0.07);
+      --border2:     rgba(255, 255, 255, 0.04);
+      --sans:        'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono:        'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      --radius:      14px;
+      --radius-sm:   8px;
+    }
+
+    /* ─── Base ─── */
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Grain texture overlay — adds warmth and depth */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    /* ─── Layout ─── */
+    #root {
+      display: flex; flex-direction: column;
+      height: 100vh; overflow: hidden;
+      padding-top: max(0px, env(safe-area-inset-top));
+      padding-bottom: max(64px, env(safe-area-inset-bottom));
+    }
+
+    .container {
+      flex: 1; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 16px 96px;
+    }
+
+    /* ─── Typography ─── */
+    .header {
+      font-size: 32px; font-weight: 800;
+      letter-spacing: -0.8px; color: var(--text);
+      margin-bottom: 24px; padding-top: 8px;
+    }
+
+    .section-title {
+      font-size: 10px; font-weight: 700;
+      color: var(--muted2); text-transform: uppercase;
+      letter-spacing: 1.2px; margin: 28px 0 10px;
+    }
+
+    .label {
+      display: block; font-size: 10px; font-weight: 700;
+      margin-bottom: 7px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+
+    /* ─── Cards ─── */
+    .card {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 18px; margin-bottom: 14px;
+      border: 1px solid var(--border);
+      animation: fadeIn 0.22s ease;
+    }
+
+    .card-header {
+      font-weight: 700; font-size: 17px;
+      margin-bottom: 5px; letter-spacing: -0.3px;
+    }
+
+    .card-subheader {
+      font-size: 13px; color: var(--muted); margin-bottom: 14px;
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      background: var(--accent); color: white;
+      border: none; border-radius: var(--radius-sm);
+      padding: 13px 18px; font-size: 14px; font-weight: 700;
+      font-family: var(--sans); cursor: pointer;
+      display: inline-block; white-space: nowrap;
+      letter-spacing: 0.1px;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .btn:active { opacity: 0.82; transform: scale(0.97); }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger { background: var(--danger); }
+    .btn-success { background: var(--success); }
+    .btn-small { padding: 9px 13px; font-size: 13px; }
+    .btn-block { width: 100%; display: block; margin: 12px 0; text-align: center; }
+
+    /* ─── Inputs ─── */
+    .input {
+      width: 100%; background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 13px 14px; font-size: 14px; font-family: var(--sans);
+      margin-bottom: 12px; -webkit-appearance: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .input-row input { flex: 1; }
+
+    /* ─── Nav Bar ─── */
+    .nav-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; align-items: center;
+      height: max(64px, 64px + env(safe-area-inset-bottom));
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer; padding: 8px 0; gap: 3px;
+      font-size: 9px; font-weight: 700; color: var(--muted2);
+      border: none; background: none; font-family: var(--sans);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      transition: color 0.15s ease;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-icon { font-size: 19px; }
+
+    /* ─── Exercise Items ─── */
+    .exercise-item {
+      background: var(--surface2); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 10px;
+      border: 1px solid var(--border);
+      animation: fadeIn 0.2s ease;
+    }
+    .exercise-name {
+      font-weight: 700; font-size: 15px;
+      margin-bottom: 12px; letter-spacing: -0.3px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .exercise-fields {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; font-size: 13px; margin-bottom: 10px;
+    }
+    .field { display: flex; flex-direction: column; }
+    .field-label {
+      color: var(--muted); font-size: 10px; font-weight: 700;
+      margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .field-value {
+      font-weight: 600; font-size: 17px;
+      font-family: var(--mono); color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .field-input {
+      background: var(--surface3); color: var(--text);
+      border: 1px solid transparent; border-radius: 6px;
+      padding: 7px 8px; font-size: 13px; font-family: var(--mono);
+      -webkit-appearance: none; width: 100%;
+      transition: border-color 0.15s ease;
+    }
+    .field-input:focus { outline: none; border-color: var(--accent); }
+
+    /* ─── Progress Bars ─── */
+    .progress-bar {
+      width: 100%; height: 10px;
+      background: var(--surface3); border-radius: 6px;
+      overflow: hidden; margin: 10px 0;
+    }
+    .progress-fill {
+      height: 100%; background: var(--accent); border-radius: 6px;
+      transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px var(--accent-glow), 0 0 4px var(--accent-glow);
+    }
+    .progress-fill.success { background: var(--success); box-shadow: 0 0 10px rgba(107,143,110,0.4); }
+
+    /* ─── Stats Grid ─── */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-card {
+      background: var(--surface2); border-radius: var(--radius);
+      padding: 18px 14px; text-align: center;
+      border: 1px solid var(--border);
+    }
+    .stat-value {
+      font-size: 30px; font-weight: 800; margin-bottom: 4px;
+      font-family: var(--mono); color: var(--accent); letter-spacing: -1.5px;
+    }
+    .stat-label {
+      font-size: 10px; color: var(--muted); font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+
+    /* ─── History ─── */
+    .history-date-group { margin-bottom: 24px; }
+    .history-date {
+      font-size: 10px; font-weight: 700; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+    }
+    .history-session {
+      background: var(--surface2); border-radius: var(--radius);
+      padding: 14px; margin-bottom: 8px; border: 1px solid var(--border);
+    }
+    .session-day { font-weight: 700; font-size: 14px; margin-bottom: 4px; letter-spacing: -0.2px; }
+    .session-details { font-size: 12px; color: var(--muted); }
+
+    /* ─── Grid ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ─── Quick Add Button ─── */
+    .quick-add-btn {
+      width: 100%; padding: 13px;
+      background: transparent; border: 2px dashed var(--surface3);
+      border-radius: var(--radius-sm); color: var(--accent);
+      font-weight: 700; font-family: var(--sans); font-size: 14px;
+      cursor: pointer; margin-bottom: 10px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .quick-add-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
+
+    /* ─── Hit Target Select ─── */
+    .hit-target-select {
+      padding: 7px 8px; background: var(--surface3); color: var(--text);
+      border: 1px solid transparent; border-radius: 6px;
+      font-size: 12px; font-family: var(--sans); cursor: pointer;
+      -webkit-appearance: none;
+    }
+
+    /* ─── Editor Screen ─── */
+    .editor-screen {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg); z-index: 500;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .editor-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      padding-top: max(14px, env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
+    }
+    .editor-title { flex: 1; font-size: 17px; font-weight: 700; letter-spacing: -0.4px; }
+    .back-btn {
+      background: none; border: none; color: var(--accent);
+      font-size: 15px; cursor: pointer; padding: 8px 4px;
+      font-weight: 600; font-family: var(--sans);
+    }
+    .save-btn {
+      background: none; border: none; color: var(--accent);
+      font-size: 15px; cursor: pointer; padding: 8px 4px;
+      font-weight: 700; font-family: var(--sans);
+    }
+    .editor-content {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 20px 16px 48px;
+    }
+
+    /* ─── Plan List ─── */
+    .plan-row {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 12px;
+      border: 2px solid var(--border);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      transition: border-color 0.2s ease;
+    }
+    .plan-row.is-active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--surface) 0%, #281E16 100%);
+    }
+    .plan-info { flex: 1; min-width: 150px; }
+    .plan-name { font-weight: 700; font-size: 16px; margin-bottom: 4px; letter-spacing: -0.3px; }
+    .plan-meta { font-size: 13px; color: var(--muted); }
+    .active-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+    .active-badge {
+      background: var(--accent-dim); color: var(--accent);
+      padding: 4px 10px; border-radius: 6px;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; flex-shrink: 0;
+      letter-spacing: 0.6px; border: 1px solid var(--accent);
+    }
+    .plan-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ─── Schedule Grid ─── */
+    .schedule-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border2);
+    }
+    .schedule-day-label {
+      width: 36px; font-weight: 700; font-size: 12px;
+      color: var(--muted); flex-shrink: 0; font-family: var(--mono);
+      letter-spacing: 0.3px;
+    }
+    .schedule-select { flex: 1; font-size: 14px; padding: 9px 10px; min-height: 42px; }
+
+    /* ─── Template Rows ─── */
+    .template-row {
+      background: var(--surface2); border-radius: var(--radius-sm);
+      padding: 13px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      border: 1px solid var(--border);
+    }
+    .template-info { flex: 1; min-width: 120px; }
+    .template-name { font-weight: 600; font-size: 14px; letter-spacing: -0.2px; }
+    .template-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .icon-btn {
+      background: var(--surface3); border: 1px solid var(--border);
+      color: var(--text); border-radius: var(--radius-sm);
+      padding: 7px 12px; font-size: 13px; cursor: pointer;
+      font-weight: 600; white-space: nowrap; font-family: var(--sans);
+      transition: opacity 0.15s ease;
+    }
+    .icon-btn:active { opacity: 0.65; }
+
+    /* ─── Form Sections ─── */
+    .form-section {
+      background: var(--surface2); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 16px; border: 1px solid var(--border);
+    }
+    .form-section-title {
+      font-weight: 700; font-size: 10px; margin-bottom: 14px;
+      text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
+    }
+
+    /* ─── Toggle Button ─── */
+    .toggle-btn {
+      background: var(--surface2); border: 2px solid var(--border);
+      color: var(--text); border-radius: var(--radius-sm);
+      padding: 13px; font-weight: 600; font-family: var(--sans);
+      cursor: pointer; text-align: center; width: 100%;
+      margin-bottom: 12px; font-size: 14px;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    .toggle-btn.active {
+      background: var(--accent-dim); color: var(--accent); border-color: var(--accent);
+    }
+
+    /* ─── Library Picker Sheet ─── */
+    .picker-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.82); z-index: 600;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .picker-sheet {
+      background: var(--surface); border-radius: 22px 22px 0 0;
+      max-height: 78vh; display: flex; flex-direction: column;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      animation: slideUp 0.3s cubic-bezier(0.32, 1.16, 0.6, 1);
+      border-top: 1px solid var(--border);
+    }
+    .picker-handle {
+      width: 36px; height: 4px; background: var(--surface3);
+      border-radius: 2px; margin: 12px auto 8px; flex-shrink: 0;
+    }
+    .picker-title-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .picker-title { font-size: 16px; font-weight: 700; letter-spacing: -0.4px; }
+    .picker-close {
+      background: var(--surface2); border: none; color: var(--muted);
+      font-size: 18px; cursor: pointer; padding: 4px 9px;
+      border-radius: 6px; line-height: 1;
+      transition: opacity 0.15s ease;
+    }
+    .picker-close:active { opacity: 0.6; }
+    .picker-search { padding: 12px 16px 8px; flex-shrink: 0; }
+    .picker-list {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 4px 16px 16px;
+    }
+    .picker-item {
+      background: var(--surface2); border-radius: var(--radius-sm);
+      padding: 13px; margin-bottom: 8px; cursor: pointer;
+      border: 1px solid var(--border);
+      transition: background 0.12s ease, border-color 0.12s ease;
+    }
+    .picker-item:active { background: var(--surface3); border-color: var(--accent); }
+    .picker-item-name { font-weight: 600; font-size: 14px; letter-spacing: -0.2px; }
+    .picker-item-meta { font-size: 12px; color: var(--muted); margin-top: 3px; font-family: var(--mono); }
+    .picker-empty {
+      color: var(--muted); text-align: center; padding: 40px 16px;
+      font-size: 14px; line-height: 1.65;
+    }
+
+    /* ─── Add Buttons Row ─── */
+    .add-btns-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .add-btns-row .btn { flex: 1; font-size: 13px; padding: 11px 8px; }
+
+    /* ─── Keyframes ─── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    @keyframes pulseCheck {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.22); }
+      100% { transform: scale(1); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 10px var(--accent-glow); }
+      50%       { box-shadow: 0 0 18px var(--accent-glow), 0 0 6px var(--accent-glow); }
+    }
+
+    /* ─── Quick Workout ─── */
+    .qw-timer-bar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 20px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .qw-timer-val {
+      font-size: 38px; font-weight: 800; font-family: var(--mono);
+      color: var(--accent); letter-spacing: -2px; line-height: 1;
+    }
+    .qw-meta-label {
+      font-size: 9px; color: var(--muted2); font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px; margin-top: 3px;
+    }
+    .qw-stat { text-align: right; }
+    .qw-stat-val {
+      font-size: 26px; font-weight: 800; font-family: var(--mono);
+      color: var(--text); letter-spacing: -1px; line-height: 1;
+    }
+    .log-set-btn {
+      width: 100%; padding: 10px 14px;
+      background: var(--accent-dim); border: 1px dashed var(--accent);
+      border-radius: 8px; color: var(--accent); font-weight: 700;
+      font-family: var(--sans); font-size: 13px; cursor: pointer;
+      margin-top: 6px; transition: background 0.12s ease;
+    }
+    .log-set-btn:active { background: var(--accent); color: white; }
+    .set-grid {
+      display: grid; grid-template-columns: 18px 1fr 1fr 1fr 16px;
+      gap: 5px; align-items: center; margin-bottom: 5px;
+    }
+    .set-grid-log {
+      display: grid; grid-template-columns: 16px 72px 1fr 1fr 1fr 22px;
+      gap: 5px; align-items: center; margin-bottom: 5px;
+    }
+    .set-tgt {
+      font-family: var(--mono); font-size: 10px; color: var(--muted2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      background: var(--surface3); border-radius: 4px;
+      padding: 5px 4px; line-height: 1.2; text-align: center;
+    }
+    .move-btn {
+      background: none; border: none; color: var(--muted2);
+      cursor: pointer; padding: 3px 5px; font-size: 12px;
+      border-radius: 4px; line-height: 1; font-family: var(--sans);
+      transition: color 0.1s ease;
+    }
+    .move-btn:hover:not(:disabled) { color: var(--text); background: var(--surface3); }
+    .move-btn:disabled { opacity: 0.18; cursor: default; }
+    .set-num {
+      font-family: var(--mono); font-size: 10px; color: var(--muted2);
+      font-weight: 700; text-align: center;
+    }
+    .set-input {
+      background: var(--surface3); color: var(--text);
+      border: 1px solid transparent; border-radius: 5px;
+      padding: 6px 7px; font-size: 13px; font-family: var(--mono);
+      -webkit-appearance: none; width: 100%;
+      transition: border-color 0.12s ease;
+    }
+    .set-input:focus { outline: none; border-color: var(--accent); }
+    .set-remove-btn {
+      background: none; border: none; color: var(--muted);
+      font-size: 16px; cursor: pointer; padding: 2px 4px; line-height: 1;
+      border-radius: 4px; transition: color 0.12s ease, background 0.12s ease;
+    }
+    .set-remove-btn:hover { color: var(--danger); background: rgba(191,80,72,0.12); }
+    .set-col-header {
+      font-size: 10px; color: var(--muted); font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+
+    /* ─── History Detail ─── */
+    .detail-exercise {
+      background: var(--surface2); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 10px; border: 1px solid var(--border);
+    }
+    .detail-exercise-name {
+      font-weight: 700; font-size: 15px; margin-bottom: 12px; letter-spacing: -0.3px;
+    }
+    .hit-badge {
+      display: inline-block; padding: 3px 9px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-top: 6px;
+    }
+    .hit-badge.yes     { background: var(--success-dim); color: var(--success); }
+    .hit-badge.partial { background: rgba(212,168,67,0.15); color: var(--warning); }
+    .hit-badge.no      { background: rgba(191,80,72,0.15); color: var(--danger); }
+    .tappable-card { cursor: pointer; transition: opacity 0.12s ease; }
+    .tappable-card:active { opacity: 0.75; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // ============================================
+    // CONSTANTS & DATA
+    // ============================================
+
+    const PROGRAM = {
+      Mon: {
+        focus: 'Lower A – Hinge Bias',
+        exercises: [
+          { name: 'Deadlift', sets: 4, reps: '3-5', load: '', rpe: '8-9', notes: '' },
+          { name: 'Bulgarian Split Squat', sets: 3, reps: '6-8', load: '', rpe: '7-8', notes: '' },
+          { name: 'Leg Curl', sets: 2, reps: '8-12', load: '', rpe: '7', notes: '' },
+          { name: 'Leg Press', sets: 2, reps: '10-15', load: '', rpe: '6-7', notes: '' },
+        ]
+      },
+      Tue: {
+        focus: 'Upper A – Push/Pull',
+        exercises: [
+          { name: 'Bench Press', sets: 4, reps: '5-7', load: '', rpe: '8-9', notes: '' },
+          { name: 'Barbell Row', sets: 4, reps: '5-7', load: '', rpe: '8-9', notes: '' },
+          { name: 'Dumbbell Incline Press', sets: 3, reps: '6-10', load: '', rpe: '7-8', notes: '' },
+          { name: 'Cable Face Pull', sets: 3, reps: '10-15', load: '', rpe: '6-7', notes: '' },
+        ]
+      },
+      Wed: { focus: 'Rest / Off', exercises: [] },
+      Thu: {
+        focus: 'Lower B – Squat Bias',
+        exercises: [
+          { name: 'Back Squat', sets: 4, reps: '5-7', load: '', rpe: '8-9', notes: '' },
+          { name: 'Leg Press', sets: 3, reps: '6-8', load: '', rpe: '7-8', notes: '' },
+          { name: 'Leg Curl', sets: 3, reps: '8-12', load: '', rpe: '7', notes: '' },
+          { name: 'Adductor Machine', sets: 2, reps: '12-15', load: '', rpe: '6', notes: '' },
+        ]
+      },
+      Fri: {
+        focus: 'Upper B – Vertical + Carries',
+        exercises: [
+          { name: 'Overhead Press', sets: 4, reps: '5-7', load: '', rpe: '8-9', notes: '' },
+          { name: 'Weighted Dips', sets: 3, reps: '6-8', load: '', rpe: '7-8', notes: '' },
+          { name: 'Pull-Ups', sets: 3, reps: '5-8', load: '', rpe: '7-8', notes: '' },
+          { name: "Farmer's Carry", sets: 3, reps: '40 ft', load: '', rpe: '6', notes: '' },
+        ]
+      },
+      Sat: { focus: 'Rest / Off', exercises: [] },
+      Sun: { focus: 'Rest / Off', exercises: [] },
+    };
+
+    const HISTORY_DATA = [];
+    /*
+      // Sample data removed — all sessions now live in localStorage only.
+      // Use "Export Backup (JSON)" on the Progress tab to back up your data.
+      {
+        date: '2026-01-14',
+        sessions: [{
+          day: 'Wed',
+          exercises: [
+            { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '115', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Incline DB Press', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '90', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Bicep Curl', sets: 2, reps: '10', load: '20', rpe: '6', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-01-20',
+        sessions: [{
+          day: 'Tue',
+          exercises: [
+            { name: 'Trap Bar Deadlift', sets: 3, reps: '5', load: '135', rpe: '6', hitTarget: 'Yes', notes: 'Warmup 45×5, 95×5' },
+            { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Hamstring Curl', sets: 2, reps: '10', load: '90', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '50', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-01-21',
+        sessions: [{
+          day: 'Wed',
+          exercises: [
+            { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '135', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Incline DB Press', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '90', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Bicep Curl', sets: 2, reps: '10', load: '25', rpe: '6', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-01-22',
+        sessions: [{
+          day: 'Thu',
+          exercises: [
+            { name: 'Goblet Squat (pause)', sets: 3, reps: '8', load: '50', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Step-Ups (DBs)', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Reverse Hyper / 45° Back Ext', sets: 2, reps: '10', load: 'BW', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Standing Calf Raise', sets: 2, reps: '10', load: '180', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Palloff Press', sets: 2, reps: '8', load: '10', rpe: '6.5', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-01-23',
+        sessions: [{
+          day: 'Fri',
+          exercises: [
+            { name: 'DB Overhead Press', sets: 3, reps: '5', load: '30', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Assisted Pullups', sets: 3, reps: '6', load: '70', rpe: '6.5', hitTarget: 'No' },
+            { name: 'Face Pulls', sets: 3, reps: '12', load: '15', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Lateral Raise', sets: 3, reps: '10', load: '10', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Farmers Carry', sets: 2, reps: '45s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Suitcase Carry', sets: 3, reps: '30s', load: '45', rpe: '6.5', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-02',
+        sessions: [{
+          day: 'Mon',
+          exercises: [
+            { name: 'Trap Bar Deadlift', sets: 3, reps: '5', load: '155', rpe: '6', hitTarget: 'Yes', notes: 'Warmup 45×5, 95×5' },
+            { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '20', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Hamstring Curl', sets: 2, reps: '10', load: '90', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '50', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-03',
+        sessions: [{
+          day: 'Tue',
+          exercises: [
+            { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '155', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Incline DB Press', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '100', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Bicep Curl', sets: 2, reps: '10', load: '20', rpe: '6', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-05',
+        sessions: [{
+          day: 'Thu',
+          exercises: [
+            { name: 'Squat', sets: 3, reps: '5', load: '135', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Step-Ups (DBs)', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Reverse Hyper / 45° Back Ext', sets: 2, reps: '10', load: 'BW', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Standing Calf Raise', sets: 2, reps: '10', load: '200', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Palloff Press', sets: 2, reps: '8', load: '10', rpe: '6.5', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-09',
+        sessions: [{
+          day: 'Mon',
+          exercises: [
+            { name: 'DB Overhead Press', sets: 3, reps: '5', load: '35', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Assisted Pullups', sets: 3, reps: '6', load: '70', rpe: '6.5', hitTarget: 'No' },
+            { name: 'Face Pulls', sets: 3, reps: '12', load: '15', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Lateral Raise', sets: 3, reps: '10', load: '10', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Farmers Carry', sets: 2, reps: '45s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Suitcase Carry', sets: 3, reps: '30s', load: '45', rpe: '6.5', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-10',
+        sessions: [{
+          day: 'Tue',
+          exercises: [
+            { name: 'Trap Bar Deadlift', sets: 3, reps: '5', load: '175', rpe: '6', hitTarget: 'Yes', notes: 'Warmup 45×5, 95×5' },
+            { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Hamstring Curl', sets: 2, reps: '10', load: '100', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '50', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-12',
+        sessions: [{
+          day: 'Thu',
+          exercises: [
+            { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '175', rpe: '6', hitTarget: 'No' },
+            { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '35', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Incline DB Press', sets: 3, reps: '8', load: '35', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '100', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Bicep Curl', sets: 2, reps: '10', load: '25', rpe: '6', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-13',
+        sessions: [{
+          day: 'Fri',
+          exercises: [
+            { name: 'Squat', sets: 3, reps: '5', load: '155', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Step-Ups (DBs)', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Reverse Hyper / 45° Back Ext', sets: 2, reps: '10', load: 'BW', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Standing Calf Raise', sets: 2, reps: '10', load: '220', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Palloff Press', sets: 2, reps: '8', load: '17.5', rpe: '6.5', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-16',
+        sessions: [{
+          day: 'Mon',
+          exercises: [
+            { name: 'DB Overhead Press', sets: 3, reps: '5', load: '40', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Assisted Pullups', sets: 3, reps: '6', load: '70', rpe: '6.5', hitTarget: 'No' },
+            { name: 'Face Pulls', sets: 3, reps: '12', load: '22.5', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Lateral Raise', sets: 3, reps: '10', load: '10', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Farmers Carry', sets: 2, reps: '45s', load: '45', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Suitcase Carry', sets: 3, reps: '30s', load: '45', rpe: '6.5', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-17',
+        sessions: [{
+          day: 'Tue',
+          exercises: [
+            { name: 'Deadlift', sets: 3, reps: '5', load: '175', rpe: '6', hitTarget: 'No', notes: '1 set @ 155' },
+            { name: 'Split Squat (DBs)', sets: 3, reps: '8', load: '25', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Hamstring Curl', sets: 2, reps: '8', load: '110', rpe: '6.5', hitTarget: 'No', notes: 'Needed 2x10' },
+            { name: 'Hip Thrust / Glute Bridge', sets: 3, reps: '8', load: '65', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Dead Bug', sets: 3, reps: '8', load: 'BW', rpe: 'Easy', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-19',
+        sessions: [{
+          day: 'Thu',
+          exercises: [
+            { name: 'Barbell Bench Press', sets: 3, reps: '5', load: '175', rpe: '6', hitTarget: 'Yes' },
+            { name: 'Chest-Supported DB Row', sets: 3, reps: '8', load: '40', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Incline DB Press', sets: 3, reps: '8', load: '40', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Lat Pulldown / Asst Pull-Up', sets: 3, reps: '8', load: '110', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Bicep Curl', sets: 2, reps: '10', load: '25', rpe: '6', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+      {
+        date: '2026-02-20',
+        sessions: [{
+          day: 'Fri',
+          exercises: [
+            { name: 'Squat', sets: 3, reps: '5', load: '205', rpe: '6', hitTarget: 'No' },
+            { name: 'Step-Ups (DBs)', sets: 3, reps: '8', load: '30', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Reverse Hyper / 45° Back Ext', sets: 2, reps: '10', load: 'BW', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Standing Calf Raise', sets: 2, reps: '12', load: '220', rpe: '6.5', hitTarget: 'Yes' },
+            { name: 'Palloff Press', sets: 2, reps: '8', load: '22.5', rpe: '6.5', hitTarget: 'Yes' }
+          ]
+        }]
+      },
+    */
+
+    const DAY_KEYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // ============================================
+    // PLANS STORAGE FUNCTIONS
+    // ============================================
+
+    function generateId() {
+      if (window.crypto && window.crypto.getRandomValues) {
+        const arr = new Uint8Array(6);
+        window.crypto.getRandomValues(arr);
+        return Array.from(arr, b => b.toString(36)).join('').substring(0, 9);
+      }
+      return Math.random().toString(36).substr(2, 9);
+    }
+
+    function lsGet(key, fallback) {
+      try {
+        const val = localStorage.getItem(key);
+        return val !== null ? JSON.parse(val) : fallback;
+      } catch (e) {
+        console.warn('localStorage read error:', key, e);
+        return fallback;
+      }
+    }
+
+    function lsSet(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (e) {
+        console.warn('localStorage write error:', key, e);
+        return false;
+      }
+    }
+
+    function lsRaw(key) {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+
+    function lsSetRaw(key, value) {
+      try { localStorage.setItem(key, value); return true; } catch (e) { return false; }
+    }
+
+    function lsRemove(key) {
+      try { localStorage.removeItem(key); } catch (e) {}
+    }
+
+    function getPlans() {
+      let plans = lsGet('wt_plans', []);
+      if (plans.length === 0) {
+        const def = makeDefaultPlan();
+        plans = [def];
+        lsSet('wt_plans', plans);
+        lsSetRaw('wt_activePlanId', def.id);
+      }
+      return plans;
+    }
+
+    function savePlan(plan) {
+      const plans = getPlans();
+      const idx = plans.findIndex(p => p.id === plan.id);
+      if (idx >= 0) plans[idx] = plan;
+      else plans.push(plan);
+      lsSet('wt_plans', plans);
+    }
+
+    function deletePlan(planId) {
+      const plans = getPlans().filter(p => p.id !== planId);
+      lsSet('wt_plans', plans);
+      if (lsRaw('wt_activePlanId') === planId && plans.length > 0) {
+        lsSetRaw('wt_activePlanId', plans[0].id);
+      }
+    }
+
+    function getActivePlan() {
+      const plans = getPlans();
+      const id = lsRaw('wt_activePlanId');
+      return plans.find(p => p.id === id) || plans[0] || null;
+    }
+
+    function setActivePlanId(id) {
+      lsSetRaw('wt_activePlanId', id);
+    }
+
+    // Current workout tracking — shared between Today and Log tabs
+    function getCurrentWorkoutId() {
+      const plan = getActivePlan();
+      if (!plan || !plan.workouts || plan.workouts.length === 0) return null;
+      const stored = lsRaw('wt_currentWorkoutId');
+      if (stored && plan.workouts.find(w => w.id === stored)) return stored;
+      // Fall back to today's scheduled workout
+      const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).substring(0, 3);
+      const todayId = plan.schedule?.[dayName];
+      if (todayId && plan.workouts.find(w => w.id === todayId)) return todayId;
+      // Fall back to first workout
+      return plan.workouts[0].id;
+    }
+
+    function setCurrentWorkoutId(id) {
+      if (id) lsSetRaw('wt_currentWorkoutId', id);
+      else lsRemove('wt_currentWorkoutId');
+    }
+
+    function advanceToNextWorkout() {
+      const plan = getActivePlan();
+      if (!plan || !plan.workouts || plan.workouts.length === 0) return;
+      const currentId = getCurrentWorkoutId();
+      const idx = plan.workouts.findIndex(w => w.id === currentId);
+      const nextIdx = (idx + 1) % plan.workouts.length;
+      setCurrentWorkoutId(plan.workouts[nextIdx].id);
+    }
+
+    function getActiveWorkout() {
+      const plan = getActivePlan();
+      if (!plan) return null;
+      const id = getCurrentWorkoutId();
+      return (plan.workouts || []).find(w => w.id === id) || null;
+    }
+
+    function getActivePlanDay(dayName) {
+      const plan = getActivePlan();
+      if (!plan) return PROGRAM[dayName];
+      const templateId = plan.schedule && plan.schedule[dayName];
+      if (!templateId) return { focus: 'Rest / Off', type: 'rest', exercises: [] };
+      const template = (plan.workouts || []).find(w => w.id === templateId);
+      if (!template) return { focus: 'Rest / Off', type: 'rest', exercises: [] };
+      return { focus: template.name, exercises: template.exercises || [] };
+    }
+
+    function makeDefaultPlan() {
+      return {
+        id: 'default_2026',
+        name: '2026 Strength Program',
+        workoutsPerWeek: 4,
+        schedule: { Mon: 'w_lowera', Tue: 'w_uppera', Wed: null, Thu: 'w_lowerb', Fri: 'w_upperb', Sat: null, Sun: null },
+        workouts: [
+          { id: 'w_lowera', name: 'Lower A – Hinge Bias', exercises: PROGRAM.Mon.exercises },
+          { id: 'w_uppera', name: 'Upper A – Push/Pull', exercises: PROGRAM.Tue.exercises },
+          { id: 'w_lowerb', name: 'Lower B – Squat Bias', exercises: PROGRAM.Thu.exercises },
+          { id: 'w_upperb', name: 'Upper B – Vertical + Carries', exercises: PROGRAM.Fri.exercises },
+        ]
+      };
+    }
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+
+    function getWeekNum(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function getAllSessions() {
+      return lsGet('wt_sessions', []);
+    }
+
+    function getAllTemplates() {
+      const plans = lsGet('wt_plans', []);
+      const results = [];
+      plans.forEach(plan => {
+        (plan.workouts || []).forEach(workout => {
+          results.push({ ...workout, _planName: plan.name, _planId: plan.id });
+        });
+      });
+      return results;
+    }
+
+    function getAllKnownExercises() {
+      const exerciseMap = {};
+      const plans = lsGet('wt_plans', []);
+      plans.forEach(plan => {
+        (plan.workouts || []).forEach(workout => {
+          (workout.exercises || []).forEach(ex => {
+            if (ex.name && !exerciseMap[ex.name]) {
+              exerciseMap[ex.name] = { name: ex.name, sets: ex.sets, reps: ex.reps, load: ex.load || '', rpe: ex.rpe || '', notes: ex.notes || '' };
+            }
+          });
+        });
+      });
+      getAllSessions().forEach(dateEntry => {
+        (dateEntry.sessions || []).forEach(sess => {
+          (sess.exercises || []).forEach(ex => {
+            if (ex.name && !exerciseMap[ex.name]) {
+              exerciseMap[ex.name] = { name: ex.name, sets: ex.sets, reps: ex.reps, load: '', rpe: ex.rpe || '', notes: '' };
+            }
+          });
+        });
+      });
+      HISTORY_DATA.forEach(dateEntry => {
+        (dateEntry.sessions || []).forEach(sess => {
+          (sess.exercises || []).forEach(ex => {
+            if (ex.name && !exerciseMap[ex.name]) {
+              exerciseMap[ex.name] = { name: ex.name, sets: ex.sets, reps: ex.reps, load: '', rpe: ex.rpe || '', notes: '' };
+            }
+          });
+        });
+      });
+      return Object.values(exerciseMap).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function saveSession(date, day, exercises, notes) {
+      const sessions = getAllSessions();
+      const dateStr = (date instanceof Date) ? date.toISOString().split('T')[0] : date;
+      const sessionObj = { day, exercises };
+      if (notes && notes.trim()) sessionObj.notes = notes.trim();
+      const idx = sessions.findIndex(s => s.date === dateStr);
+      if (idx >= 0) sessions[idx].sessions = [sessionObj];
+      else sessions.push({ date: dateStr, sessions: [sessionObj] });
+      lsSet('wt_sessions', sessions);
+    }
+
+    // ============================================
+    // SCREENS
+    // ============================================
+
+    function TodayScreen({ onStartWorkout }) {
+      const now = new Date();
+      const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).substring(0, 3);
+      const activePlan = getActivePlan();
+      const workouts = activePlan?.workouts || [];
+      const todayTemplateId = activePlan?.schedule?.[dayName] || null;
+      const [selectedId, setSelectedId] = useState(() => getCurrentWorkoutId());
+
+      const selectedWorkout = workouts.find(w => w.id === selectedId) || null;
+      const exercises = selectedWorkout?.exercises || [];
+      const isRestDay = exercises.length === 0;
+      const todayFull = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      const todayStr = now.toISOString().split('T')[0];
+      const alreadyLoggedToday = getAllSessions().some(s => s.date === todayStr);
+
+      return (
+        <div className="container">
+          <div className="header">Today</div>
+
+          {/* Day header card */}
+          <div className="card" style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                  {todayFull}
+                </div>
+                <div className="card-header" style={{ marginBottom: 6 }}>
+                  {selectedWorkout?.name || 'Rest / Off'}
+                </div>
+                {activePlan && (
+                  <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>
+                    {activePlan.name}
+                  </div>
+                )}
+              </div>
+              {!isRestDay && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0, marginLeft: 12 }}>
+                  <div style={{
+                    background: 'var(--accent-dim)', color: 'var(--accent)',
+                    borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                    border: '1px solid var(--accent)', fontFamily: 'var(--mono)'
+                  }}>
+                    {exercises.length} exs
+                  </div>
+                  {alreadyLoggedToday && (
+                    <div style={{
+                      background: 'var(--success-dim)', color: 'var(--success)',
+                      borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 700,
+                      border: '1px solid var(--success)'
+                    }}>
+                      ✓ Logged
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Workout switcher */}
+          {workouts.length > 0 && (
+            <div style={{
+              display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4,
+              marginBottom: 16, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch'
+            }}>
+              {workouts.map(w => {
+                const isSelected = selectedId === w.id;
+                const isToday = w.id === todayTemplateId;
+                return (
+                  <button
+                    key={w.id}
+                    onClick={() => { setSelectedId(w.id); setCurrentWorkoutId(w.id); }}
+                    style={{
+                      flexShrink: 0, padding: '7px 14px', borderRadius: 20,
+                      border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                      background: isSelected ? 'var(--accent-dim)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent)' : 'var(--muted)',
+                      fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                      fontFamily: 'var(--sans)', whiteSpace: 'nowrap',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {w.name}
+                    {isToday && (
+                      <span style={{ marginLeft: 5, fontSize: 10, opacity: 0.65 }}>· today</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Start Workout CTA */}
+          {!isRestDay && onStartWorkout && (
+            <button
+              className="btn btn-block"
+              onClick={onStartWorkout}
+              style={{
+                marginBottom: 14,
+                background: alreadyLoggedToday ? 'var(--success)' : 'var(--accent)',
+                fontSize: 15, fontWeight: 700, letterSpacing: '-0.2px'
+              }}>
+              {alreadyLoggedToday ? '✓ Log Another Session' : '▶  Start Workout'}
+            </button>
+          )}
+
+          {/* Exercise list */}
+          {!isRestDay ? (
+            exercises.map((ex, i) => (
+              <div key={i} className="exercise-item">
+                <div className="exercise-name">{ex.name}</div>
+                <div className="exercise-fields" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  <div className="field">
+                    <div className="field-label">Sets</div>
+                    <div className="field-value">{ex.sets}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label">Reps</div>
+                    <div className="field-value">{ex.reps}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label">Load</div>
+                    <div className="field-value">{ex.load || '—'}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label">RPE</div>
+                    <div className="field-value">{ex.rpe || '—'}</div>
+                  </div>
+                </div>
+                {ex.notes && (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2, fontStyle: 'italic' }}>
+                    {ex.notes}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="card" style={{ textAlign: 'center', padding: '32px 20px' }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🌿</div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Rest Day</div>
+              <div style={{ color: 'var(--muted)', fontSize: 14 }}>Recovery is part of the program.</div>
+            </div>
+          )}
+
+          {/* Upcoming schedule calendar */}
+          <ScheduleCalendar />
+        </div>
+      );
+    }
+
+    // ─── Schedule Calendar (drag-and-drop weekly planner) ───
+
+    function ScheduleCalendar() {
+      const activePlan = getActivePlan();
+      const workouts = activePlan?.workouts || [];
+      const schedule = activePlan?.schedule || {};
+
+      const [overrides, setOverrides] = useState(() =>
+        lsGet('wt_dateOverrides', {})
+      );
+      const [draggedId, setDraggedId] = useState(null);
+      const [dragOver, setDragOver] = useState(null);
+
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+      const todayStr = today.toISOString().split('T')[0];
+
+      // Build 4 weeks starting from this week's Monday
+      const weeks = (() => {
+        const mon = new Date(today);
+        const dow = today.getDay(); // 0=Sun
+        mon.setDate(today.getDate() + (dow === 0 ? -6 : 1 - dow));
+        const result = [];
+        for (let w = 0; w < 4; w++) {
+          const week = [];
+          for (let d = 0; d < 7; d++) {
+            const date = new Date(mon);
+            date.setDate(mon.getDate() + w * 7 + d);
+            date.setHours(12, 0, 0, 0);
+            week.push(date);
+          }
+          result.push(week);
+        }
+        return result;
+      })();
+
+      const DAY_KEYS_7 = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const WORKOUT_COLORS = ['#E07B39', '#6B8F6E', '#7A9CBF', '#D4A843', '#B870A0', '#5BA5A0'];
+      const colorMap = {};
+      workouts.forEach((w, i) => { colorMap[w.id] = WORKOUT_COLORS[i % WORKOUT_COLORS.length]; });
+
+      const getWorkoutForDate = (date) => {
+        const ds = date.toISOString().split('T')[0];
+        const ov = overrides[ds];
+        if (ov === '__rest__') return null;
+        if (ov) return workouts.find(w => w.id === ov) || null;
+        const dayKey = DAY_KEYS_7[(date.getDay() + 6) % 7];
+        const wid = schedule[dayKey];
+        if (!wid) return null;
+        return workouts.find(w => w.id === wid) || null;
+      };
+
+      const applyDrop = (ds) => {
+        if (!draggedId) return;
+        const updated = { ...overrides, [ds]: draggedId };
+        setOverrides(updated);
+        lsSet('wt_dateOverrides', updated);
+        setDraggedId(null);
+        setDragOver(null);
+      };
+
+      const clearOverride = (ds, e) => {
+        e.stopPropagation();
+        const updated = { ...overrides };
+        delete updated[ds];
+        setOverrides(updated);
+        lsSet('wt_dateOverrides', updated);
+      };
+
+      if (!activePlan || workouts.length === 0) return null;
+
+      return (
+        <div style={{ marginTop: 32 }}>
+          <div className="section-title">Upcoming Schedule</div>
+
+          {/* Calendar grid */}
+          <div style={{
+            background: 'var(--surface)', borderRadius: 14,
+            border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 16
+          }}>
+            {/* Day headers */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--surface2)', borderBottom: '1px solid var(--border)' }}>
+              {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d, i) => (
+                <div key={i} style={{
+                  textAlign: 'center', padding: '9px 0', fontSize: 9, fontWeight: 800,
+                  color: i >= 5 ? 'var(--muted2)' : 'var(--muted)',
+                  letterSpacing: '0.6px', fontFamily: 'var(--mono)'
+                }}>{d}</div>
+              ))}
+            </div>
+
+            {/* Week rows */}
+            {weeks.map((week, wi) => (
+              <div key={wi} style={{
+                display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)',
+                borderTop: wi > 0 ? '1px solid var(--border2)' : 'none'
+              }}>
+                {week.map((date, di) => {
+                  const ds = date.toISOString().split('T')[0];
+                  const workout = getWorkoutForDate(date);
+                  const isToday = ds === todayStr;
+                  const isPast = date < today && !isToday;
+                  const isWeekend = di >= 5;
+                  const isDragOver = dragOver === ds;
+                  const hasOv = overrides[ds] !== undefined;
+                  const isExplicitRest = overrides[ds] === '__rest__';
+                  const color = workout ? colorMap[workout.id] : null;
+                  const abbrev = workout ? workout.name.split(/\s*[–\-]\s*/)[0].trim() : null;
+
+                  return (
+                    <div
+                      key={di}
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(ds); }}
+                      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}
+                      onDrop={() => applyDrop(ds)}
+                      style={{
+                        minHeight: 64, padding: '6px 3px 5px',
+                        background: isToday
+                          ? 'rgba(224,123,57,0.08)'
+                          : isDragOver
+                          ? 'rgba(224,123,57,0.16)'
+                          : 'transparent',
+                        borderLeft: di > 0 ? '1px solid var(--border2)' : 'none',
+                        outline: isToday
+                          ? '2px solid var(--accent)'
+                          : isDragOver
+                          ? '2px dashed var(--accent)'
+                          : 'none',
+                        outlineOffset: '-2px',
+                        transition: 'background 0.1s ease',
+                        cursor: draggedId ? 'copy' : 'default',
+                        position: 'relative', overflow: 'visible'
+                      }}
+                    >
+                      {/* Date number */}
+                      <div style={{
+                        textAlign: 'center', fontFamily: 'var(--mono)',
+                        fontSize: 11, fontWeight: isToday ? 800 : 400,
+                        color: isToday
+                          ? 'var(--accent)'
+                          : isPast ? 'var(--muted2)'
+                          : isWeekend ? 'var(--muted2)'
+                          : 'var(--text)',
+                        marginBottom: 4, lineHeight: 1
+                      }}>
+                        {date.getDate() === 1 && (
+                          <div style={{ fontSize: 7, color: 'var(--muted2)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: 1 }}>
+                            {date.toLocaleDateString('en-US', { month: 'short' })}
+                          </div>
+                        )}
+                        {date.getDate()}
+                      </div>
+
+                      {/* Workout chip — upcoming days */}
+                      {workout && !isPast && (
+                        <div style={{
+                          fontSize: 8, fontWeight: 700, textAlign: 'center',
+                          background: `${color}25`, color: color,
+                          border: `1px solid ${color}55`,
+                          borderRadius: 4, padding: '2px 2px',
+                          lineHeight: 1.3, overflow: 'hidden',
+                          textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          position: 'relative'
+                        }}>
+                          {abbrev}
+                          {hasOv && (
+                            <button
+                              onClick={(e) => clearOverride(ds, e)}
+                              style={{
+                                position: 'absolute', top: -6, right: -6,
+                                background: 'var(--surface3)', color: 'var(--muted)',
+                                border: '1px solid var(--border)', borderRadius: '50%',
+                                width: 14, height: 14, fontSize: 9, fontWeight: 800,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', padding: 0, fontFamily: 'var(--sans)',
+                                lineHeight: 1, zIndex: 2
+                              }}
+                            >×</button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Workout chip — past days (dimmed, no × button) */}
+                      {workout && isPast && (
+                        <div style={{
+                          fontSize: 8, textAlign: 'center', color: 'var(--muted2)',
+                          fontWeight: 600, opacity: 0.55
+                        }}>
+                          {abbrev}
+                        </div>
+                      )}
+
+                      {/* Explicit rest indicator */}
+                      {isExplicitRest && !isPast && (
+                        <div style={{ textAlign: 'center', position: 'relative', lineHeight: 1 }}>
+                          <span style={{ fontSize: 13 }}>🌿</span>
+                          <button
+                            onClick={(e) => clearOverride(ds, e)}
+                            style={{
+                              position: 'absolute', top: -8, right: -4,
+                              background: 'var(--surface3)', color: 'var(--muted)',
+                              border: '1px solid var(--border)', borderRadius: '50%',
+                              width: 14, height: 14, fontSize: 9, fontWeight: 800,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', padding: 0, fontFamily: 'var(--sans)',
+                              lineHeight: 1, zIndex: 2
+                            }}
+                          >×</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* Drag source pills */}
+          <div style={{ fontSize: 10, color: 'var(--muted2)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>
+            Drag onto any day to override
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
+            {workouts.map((w) => {
+              const color = colorMap[w.id];
+              const isActive = draggedId === w.id;
+              return (
+                <div
+                  key={w.id}
+                  draggable
+                  onDragStart={() => setDraggedId(w.id)}
+                  onDragEnd={() => { setDraggedId(null); setDragOver(null); }}
+                  style={{
+                    background: isActive ? color : `${color}20`,
+                    border: `1.5px solid ${color}70`,
+                    borderRadius: 8, padding: '8px 14px',
+                    color: isActive ? '#fff' : color,
+                    fontSize: 12, fontWeight: 700,
+                    cursor: 'grab', userSelect: 'none',
+                    transition: 'all 0.12s ease',
+                    opacity: isActive ? 0.65 : 1,
+                    boxShadow: isActive ? `0 4px 14px ${color}40` : 'none'
+                  }}
+                >
+                  {w.name}
+                </div>
+              );
+            })}
+            <div
+              draggable
+              onDragStart={() => setDraggedId('__rest__')}
+              onDragEnd={() => { setDraggedId(null); setDragOver(null); }}
+              style={{
+                background: draggedId === '__rest__' ? 'var(--surface3)' : 'var(--surface2)',
+                border: '1.5px solid var(--border)',
+                borderRadius: 8, padding: '8px 14px',
+                color: 'var(--muted)', fontSize: 12, fontWeight: 700,
+                cursor: 'grab', userSelect: 'none', transition: 'all 0.12s ease'
+              }}
+            >
+              🌿 Rest Day
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function LogScreen({ onQuickWorkout, autoLoad }) {
+      const now = new Date();
+      const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).substring(0, 3);
+      const [exercises, setExercises] = useState([]);
+      const [notes, setNotes] = useState('');
+      const [saved, setSaved] = useState(false);
+      const prevSetsKey = useRef('');
+      const autoLoadDone = useRef(false);
+
+      // Auto-compute hit target whenever set values change, but only if user hasn't manually overridden
+      const setsKey = exercises.map(ex => JSON.stringify(ex.sets)).join('|');
+      useEffect(() => {
+        if (setsKey === prevSetsKey.current) return;
+        prevSetsKey.current = setsKey;
+        setExercises(prev => prev.map(ex => {
+          if (!ex._target || ex._hitManual) return ex;
+          const tR = parseFloat(ex._target.reps);
+          const tL = parseFloat(ex._target.load);
+          const tS = parseInt(ex._target.sets) || 0;
+          const filled = ex.sets.filter(s => s.reps !== '' || s.load !== '');
+          if (filled.length === 0) return ex;
+          const hits = filled.filter(s => {
+            const r = parseFloat(s.reps), l = parseFloat(s.load);
+            return (!tR || isNaN(r) || r >= tR) && (!tL || isNaN(l) || l >= tL);
+          });
+          const hit = (hits.length >= tS && filled.length >= tS) ? 'Yes'
+                    : hits.length > 0 ? 'Partial' : 'No';
+          return ex.hitTarget === hit ? ex : { ...ex, hitTarget: hit };
+        }));
+      }, [setsKey]);
+
+      // Auto-load workout when navigated here from Today tab's Start Workout button
+      useEffect(() => {
+        if (autoLoad && !autoLoadDone.current) {
+          autoLoadDone.current = true;
+          const workout = getActiveWorkout();
+          const exList = workout?.exercises || [];
+          if (exList.length > 0) {
+            setExercises(exList.map(ex => {
+              const target = { sets: ex.sets, reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || '' };
+              const setCount = parseInt(ex.sets) || 1;
+              const sets = Array.from({ length: setCount }, () => ({
+                reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || ''
+              }));
+              return { id: generateId(), name: ex.name, _target: target, sets, hitTarget: 'Yes', _hitManual: false, notes: ex.notes || '' };
+            }));
+            setSaved(false);
+          }
+        }
+      }, [autoLoad]);
+
+      const currentWorkout = getActiveWorkout();
+
+      const handleLoadProgram = () => {
+        const workout = getActiveWorkout();
+        const exList = workout?.exercises || [];
+        if (exList.length > 0) {
+          setExercises(exList.map(ex => {
+            const target = { sets: ex.sets, reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || '' };
+            const setCount = parseInt(ex.sets) || 1;
+            const sets = Array.from({ length: setCount }, () => ({
+              reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || ''
+            }));
+            return { id: generateId(), name: ex.name, _target: target, sets, hitTarget: 'Yes', _hitManual: false, notes: ex.notes || '' };
+        } else {
+          setExercises([]);
+        }
+        setSaved(false);
+      };
+
+      const handleAddExercise = () => setExercises(prev => [...prev, {
+        id: generateId(), name: '', _target: null,
+        sets: [{ reps: '', load: '', rpe: '' }], hitTarget: 'Yes', _hitManual: false, notes: ''
+      }]);
+
+      const handleRemoveExercise = (i) => setExercises(prev => prev.filter((_, idx) => idx !== i));
+
+      const moveExercise = (i, dir) => setExercises(prev => {
+        const arr = [...prev]; const j = i + dir;
+        if (j < 0 || j >= arr.length) return prev;
+        [arr[i], arr[j]] = [arr[j], arr[i]]; return arr;
+      });
+
+      const updateExField = (i, field, val) =>
+        setExercises(prev => prev.map((ex, idx) => {
+          if (idx !== i) return ex;
+          const update = { ...ex, [field]: val };
+          if (field === 'hitTarget') update._hitManual = true;
+          return update;
+        }));
+
+      const addSet = (exIdx) => setExercises(prev => prev.map((ex, i) => {
+        if (i !== exIdx) return ex;
+        const last = ex.sets[ex.sets.length - 1] || { reps: '', load: '', rpe: '' };
+        return { ...ex, sets: [...ex.sets, { ...last }] };
+      }));
+
+      const removeSet = (exIdx, si) => setExercises(prev => prev.map((ex, i) =>
+        i !== exIdx ? ex : { ...ex, sets: ex.sets.filter((_, s) => s !== si) }
+      ));
+
+      const updateSet = (exIdx, si, field, val) => setExercises(prev => prev.map((ex, i) =>
+        i !== exIdx ? ex : { ...ex, sets: ex.sets.map((s, j) => j === si ? { ...s, [field]: val } : s) }
+      ));
+
+      const [saveError, setSaveError] = useState('');
+
+      const handleSave = () => {
+        const unnamed = exercises.some(ex => !ex.name.trim());
+        if (unnamed) { setSaveError('All exercises need a name before saving.'); return; }
+        const valid = exercises.filter(ex => ex.name.trim() && ex.sets.length > 0);
+        if (valid.length === 0) { setSaveError('Add at least one exercise with sets logged.'); return; }
+        setSaveError('');
+        const sessionExercises = valid.map(ex => ({
+          name: ex.name,
+          sets: ex.sets.length,
+          reps: ex.sets.map(s => s.reps).filter(Boolean).join('/') || ex._target?.reps || '',
+          load: ex.sets[ex.sets.length - 1]?.load || '',
+          rpe: ex.sets[ex.sets.length - 1]?.rpe || '',
+          hitTarget: ex.hitTarget,
+          notes: ex.notes
+        }));
+        saveSession(now, dayName, sessionExercises, notes);
+        advanceToNextWorkout();
+        setSaved(true);
+        setTimeout(() => { setSaved(false); setExercises([]); setNotes(''); }, 1800);
+      };
+
+      // Per-set hit indicator
+      const setHit = (s, target) => {
+        if (!target || (s.reps === '' && s.load === '')) return null;
+        const tR = parseFloat(target.reps), tL = parseFloat(target.load);
+        const r = parseFloat(s.reps), l = parseFloat(s.load);
+        const rOk = !tR || isNaN(r) || r >= tR;
+        const lOk = !tL || isNaN(l) || l >= tL;
+        return rOk && lOk;
+      };
+
+      const colHdr = { fontSize: 10, color: 'var(--muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', textAlign: 'center' };
+
+      return (
+        <div className="container">
+          <div style={{ marginBottom: 20, paddingTop: 8 }}>
+            <div className="header" style={{ marginBottom: 2 }}>Log</div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>
+              {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </div>
+          </div>
+          <div className="add-btns-row" style={{ marginBottom: 20 }}>
+            <button className="btn" style={{ flex: 1 }} onClick={onQuickWorkout}>
+              ⚡ Quick Workout
+            </button>
+            <button className="btn btn-secondary" style={{ flex: 1 }} onClick={handleLoadProgram}>
+              {currentWorkout ? `Load: ${currentWorkout.name}` : "Load Today's Plan"}
+            </button>
+          </div>
+
+          {exercises.length === 0 && (
+            <div className="card" style={{ textAlign: 'center', padding: '32px 20px' }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>📝</div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>Ready to log?</div>
+              <div style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.7 }}>
+                {currentWorkout
+                  ? `Tap "Load: ${currentWorkout.name}" to start your planned workout, or use Quick Workout for a free session.`
+                  : 'Load your plan above, or tap Quick Workout for a free-form session.'}
+              </div>
+            </div>
+          )}
+
+          {exercises.length > 0 && (
+            <>
+              <div className="section-title">Exercises</div>
+              {exercises.map((ex, i) => (
+                <div key={ex.id || i} className="exercise-item">
+
+                  {/* Name row + reorder */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <button className="move-btn" aria-label="Move exercise up" onClick={() => moveExercise(i, -1)} disabled={i === 0}>▲</button>
+                      <button className="move-btn" aria-label="Move exercise down" onClick={() => moveExercise(i, 1)} disabled={i === exercises.length - 1}>▼</button>
+                    </div>
+                    <input type="text" className="field-input" placeholder="Exercise name" aria-label="Exercise name"
+                      value={ex.name} onChange={e => updateExField(i, 'name', e.target.value)}
+                      style={{ flex: 1, fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600 }} />
+                  </div>
+
+                  {/* Set column headers */}
+                  {ex.sets.length > 0 && (
+                    <div className={ex._target ? 'set-grid-log' : 'set-grid'}
+                      style={{ marginBottom: 5, paddingBottom: 5, borderBottom: '1px solid var(--border)' }}>
+                      <div style={colHdr}>#</div>
+                      {ex._target && <div style={colHdr}>Target</div>}
+                      <div style={colHdr}>Reps</div>
+                      <div style={colHdr}>Load</div>
+                      <div style={colHdr}>RPE</div>
+                      <div />
+                    </div>
+                  )}
+
+                  {/* Set rows */}
+                  {ex.sets.map((s, si) => {
+                    const hit = setHit(s, ex._target);
+                    const tgt = ex._target
+                      ? [ex._target.reps, ex._target.load, ex._target.rpe].filter(Boolean).join('·')
+                      : null;
+                    return (
+                      <div key={si} className={ex._target ? 'set-grid-log' : 'set-grid'}>
+                        <div className="set-num" style={{ color: hit === true ? 'var(--success)' : hit === false ? 'var(--danger)' : 'var(--muted2)' }}>
+                          {si + 1}
+                        </div>
+                        {ex._target && (
+                          <div className="set-tgt">{tgt || '—'}</div>
+                        )}
+                        <input className="set-input" type="text" inputMode="decimal" value={s.reps}
+                          onChange={e => updateSet(i, si, 'reps', e.target.value)} placeholder="—" />
+                        <input className="set-input" type="text" inputMode="decimal" value={s.load}
+                          onChange={e => updateSet(i, si, 'load', e.target.value)} placeholder="—" />
+                        <input className="set-input" type="text" inputMode="decimal" value={s.rpe}
+                          onChange={e => updateSet(i, si, 'rpe', e.target.value)} placeholder="—" />
+                        <button className="set-remove-btn" aria-label={`Remove set ${si + 1}`} onClick={() => removeSet(i, si)}>×</button>
+                      </div>
+                    );
+                  })}
+
+                  <button className="log-set-btn" onClick={() => addSet(i)}>+ Log Set</button>
+
+                  {/* Hit target + notes */}
+                  <div className="exercise-fields" style={{ marginTop: 10 }}>
+                    <div className="field">
+                      <label className="field-label" htmlFor={`ht-${ex.id}`}>Hit Target</label>
+                      <select id={`ht-${ex.id}`} className="hit-target-select" value={ex.hitTarget}
+                        onChange={e => updateExField(i, 'hitTarget', e.target.value)}>
+                        <option>Yes</option>
+                        <option>Partial</option>
+                        <option>No</option>
+                      </select>
+                    </div>
+                    <div className="field" style={{ flex: 2 }}>
+                      <label className="field-label">Notes</label>
+                      <input type="text" className="field-input" value={ex.notes}
+                        onChange={e => updateExField(i, 'notes', e.target.value)} />
+                    </div>
+                  </div>
+
+                  <button className="btn btn-danger btn-small" style={{ marginTop: 10 }}
+                    aria-label={`Remove ${ex.name || 'exercise'}`}
+                    onClick={() => handleRemoveExercise(i)}>Remove</button>
+                </div>
+              ))}
+
+              <button className="quick-add-btn" onClick={handleAddExercise}>+ Add Exercise</button>
+
+              <div style={{ marginBottom: 12 }}>
+                <label className="label">Session Notes</label>
+                <input type="text" className="input" placeholder="How did it feel?"
+                  value={notes} onChange={e => setNotes(e.target.value)} />
+              </div>
+
+              {saveError && (
+                <div role="alert" style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 10, fontWeight: 600 }}>
+                  {saveError}
+                </div>
+              )}
+              <button className={`btn btn-block ${saved ? 'btn-success' : ''}`}
+                onClick={handleSave}
+                style={{ animation: saved ? 'pulseCheck 0.4s ease' : 'none' }}>
+                {saved ? '✓ Session Saved!' : 'Save Session'}
+              </button>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    function exportData() {
+      try {
+        const payload = {
+          exportedAt: new Date().toISOString(),
+          plans: lsGet('wt_plans', []),
+          sessions: lsGet('wt_sessions', []),
+          activePlanId: lsRaw('wt_activePlanId'),
+          dateOverrides: lsGet('wt_dateOverrides', {}),
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `jfit-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('Export failed: ' + e.message);
+      }
+    }
+
+    function ProgressScreen() {
+      const allSessions = [...HISTORY_DATA, ...getAllSessions()];
+      const totalSessions = allSessions.reduce((sum, s) => sum + (s.sessions ? s.sessions.length : 0), 0);
+      const thisWeek = allSessions.filter(s => {
+        const d = new Date(s.date + 'T12:00:00');
+        return getWeekNum(d) === getWeekNum(new Date());
+      }).length;
+      const activePlan = getActivePlan();
+      const target = activePlan?.workoutsPerWeek || 4;
+      const pct = Math.min(100, Math.round((thisWeek / target) * 100));
+
+      // Compute consecutive day streak
+      const sessionDates = new Set(allSessions.map(s => s.date));
+      const computeStreak = () => {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        let streak = 0;
+        let d = new Date(today);
+        if (!sessionDates.has(todayStr)) d.setDate(d.getDate() - 1);
+        while (streak < 365) {
+          const ds = d.toISOString().split('T')[0];
+          if (sessionDates.has(ds)) { streak++; d.setDate(d.getDate() - 1); }
+          else break;
+        }
+        return streak;
+      };
+      const streak = computeStreak();
+
+      return (
+        <div className="container">
+          <div className="header">Progress</div>
+
+          <div className="stat-grid" style={{ marginBottom: 20, gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            <div className="stat-card">
+              <div className="stat-value" style={{ color: streak > 0 ? 'var(--accent)' : 'var(--muted2)' }}>
+                {streak}
+              </div>
+              <div className="stat-label">Day Streak</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value" style={{ color: thisWeek >= target ? 'var(--success)' : 'var(--accent)' }}>
+                {thisWeek}<span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 400 }}>/{target}</span>
+              </div>
+              <div className="stat-label">This Week</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{totalSessions}</div>
+              <div className="stat-label">Total</div>
+            </div>
+          </div>
+
+          {/* Weekly progress bar */}
+          <div className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>Week Target</div>
+              <div style={{ fontSize: 13, fontFamily: 'var(--mono)', color: 'var(--accent)', fontWeight: 600 }}>
+                {pct}%
+              </div>
+            </div>
+            <div className="progress-bar">
+              <div
+                className={`progress-fill${pct >= 100 ? ' success' : ''}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
+              {thisWeek >= target ? 'Weekly target hit! 🔥' : `${target - thisWeek} more session${target - thisWeek === 1 ? '' : 's'} to hit your goal`}
+            </div>
+          </div>
+
+          <button
+            className="btn btn-secondary btn-block"
+            onClick={exportData}
+            aria-label="Export all workout data as a JSON backup file"
+            style={{ marginBottom: 8 }}>
+            ↓ Export Backup (JSON)
+          </button>
+
+          <div className="section-title">Recent Activity</div>
+          {[...HISTORY_DATA, ...getAllSessions()]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 8)
+            .map((s, i) => (
+            <div key={i} className="card" style={{ padding: '14px 16px' }}>
+              <div style={{ fontSize: 11, color: 'var(--muted2)', marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                {new Date(s.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </div>
+              {s.sessions && s.sessions.map((sess, j) => (
+                <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>
+                    {new Date(s.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--mono)' }}>
+                    {sess.exercises?.length ?? 0} ex · {sess.exercises?.reduce((sum, e) => sum + (parseInt(e.sets) || 0), 0) ?? 0} sets
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function HistoryScreen({ onViewDetail, onLogPast }) {
+      const allSessions = [...HISTORY_DATA, ...getAllSessions()].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const grouped = {};
+      allSessions.forEach(s => {
+        if (!grouped[s.date]) grouped[s.date] = [];
+        grouped[s.date].push(...(s.sessions || []));
+      });
+
+      return (
+        <div className="container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingTop: 8 }}>
+            <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--text)' }}>History</div>
+            <button className="btn btn-secondary btn-small" onClick={onLogPast}>+ Past Workout</button>
+          </div>
+          {Object.entries(grouped).length === 0 && (
+            <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>📋</div>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>No sessions yet</div>
+              <div style={{ color: 'var(--muted)', fontSize: 13 }}>Log a session to see it here.</div>
+            </div>
+          )}
+          {Object.entries(grouped).map(([date, sessions]) => (
+            <div key={date} className="history-date-group">
+              <div className="history-date">{formatDate(new Date(date + 'T12:00:00'))}</div>
+              {sessions.map((sess, i) => (
+                <div key={i} className="history-session tappable-card"
+                  onClick={() => onViewDetail && onViewDetail(date, sess)}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="session-day">{sess.day}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
+                        {sess.exercises ? sess.exercises.length : 0} exs
+                      </div>
+                      <div style={{ color: 'var(--accent)', fontSize: 14, fontWeight: 600 }}>›</div>
+                    </div>
+                  </div>
+                  {sess.exercises && sess.exercises.length > 0 && (
+                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {sess.exercises.slice(0, 4).map((ex, j) => (
+                        <span key={j} style={{
+                          background: 'var(--surface3)', borderRadius: 4,
+                          padding: '2px 8px', fontSize: 11, color: 'var(--muted)', fontWeight: 500
+                        }}>
+                          {ex.name}
+                        </span>
+                      ))}
+                      {sess.exercises.length > 4 && (
+                        <span style={{
+                          background: 'var(--surface3)', borderRadius: 4,
+                          padding: '2px 8px', fontSize: 11, color: 'var(--muted2)', fontWeight: 500
+                        }}>
+                          +{sess.exercises.length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // ─── History Detail ───
+
+    function HistoryDetailScreen({ date, session, onBack }) {
+      const dateStr = formatDate(new Date(date + 'T12:00:00'));
+      const exercises = session.exercises || [];
+      const totalSets = exercises.reduce((s, e) => s + (parseInt(e.sets) || 0), 0);
+
+      return (
+        <div className="editor-screen">
+          <div className="editor-header">
+            <button className="back-btn" onClick={onBack}>← Back</button>
+            <div className="editor-title">{session.day}</div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', padding: '8px 4px', fontFamily: 'var(--mono)' }}>
+              {exercises.length}ex
+            </div>
+          </div>
+          <div className="editor-content">
+
+            {/* Session header */}
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, color: 'var(--muted2)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>
+                {dateStr}
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 12 }}>
+                {session.day}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="stat-card" style={{ padding: '12px' }}>
+                  <div className="stat-value" style={{ fontSize: 22 }}>{exercises.length}</div>
+                  <div className="stat-label">Exercises</div>
+                </div>
+                <div className="stat-card" style={{ padding: '12px' }}>
+                  <div className="stat-value" style={{ fontSize: 22 }}>{totalSets}</div>
+                  <div className="stat-label">Total Sets</div>
+                </div>
+              </div>
+            </div>
+
+            {exercises.map((ex, i) => (
+              <div key={i} className="detail-exercise">
+                <div className="detail-exercise-name">{ex.name}</div>
+                <div className="exercise-fields" style={{ marginBottom: ex.rpe || ex.hitTarget || ex.notes ? 10 : 0 }}>
+                  <div className="field">
+                    <div className="field-label">Sets</div>
+                    <div className="field-value">{ex.sets || '—'}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label">Reps</div>
+                    <div className="field-value" style={{ fontSize: 14 }}>{ex.reps || '—'}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label">Load</div>
+                    <div className="field-value" style={{ fontSize: 13 }}>{ex.load || '—'}</div>
+                  </div>
+                </div>
+                {ex.rpe && (
+                  <div className="exercise-fields" style={{ marginBottom: 8 }}>
+                    <div className="field">
+                      <div className="field-label">RPE</div>
+                      <div className="field-value" style={{ fontSize: 15 }}>{ex.rpe}</div>
+                    </div>
+                  </div>
+                )}
+                {ex.hitTarget && ex.hitTarget !== '' && (
+                  <span className={`hit-badge ${ex.hitTarget === 'Yes' ? 'yes' : ex.hitTarget === 'Partial' ? 'partial' : 'no'}`}>
+                    {ex.hitTarget === 'Yes' ? '✓ Hit Target' : ex.hitTarget === 'Partial' ? '≈ Partial' : '✕ Missed'}
+                  </span>
+                )}
+                {ex.notes && (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, fontStyle: 'italic' }}>
+                    {ex.notes}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Quick Workout ───
+
+    function QuickWorkoutScreen({ onBack }) {
+      const [exercises, setExercises] = useState([]);
+      const [elapsed, setElapsed] = useState(0);
+      const [showPicker, setShowPicker] = useState(false);
+      const [showNewExForm, setShowNewExForm] = useState(false);
+      const [newExName, setNewExName] = useState('');
+
+      useEffect(() => {
+        const id = setInterval(() => setElapsed(e => e + 1), 1000);
+        return () => clearInterval(id);
+      }, []);
+
+      const formatTime = (s) => {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        if (m >= 60) {
+          const h = Math.floor(m / 60);
+          return `${h}:${String(m % 60).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        }
+        return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      };
+
+      const addExercise = (name, defaults = {}) => {
+        setExercises(prev => [...prev, { id: generateId(), name, sets: [] }]);
+        setShowPicker(false);
+        setShowNewExForm(false);
+        setNewExName('');
+      };
+
+      const removeExercise = (idx) =>
+        setExercises(prev => prev.filter((_, i) => i !== idx));
+
+      const moveExercise = (idx, dir) => setExercises(prev => {
+        const arr = [...prev]; const j = idx + dir;
+        if (j < 0 || j >= arr.length) return prev;
+        [arr[idx], arr[j]] = [arr[j], arr[idx]]; return arr;
+      });
+
+      const logSet = (exIdx) => {
+        setExercises(prev => {
+          const updated = [...prev];
+          const ex = updated[exIdx];
+          const last = ex.sets[ex.sets.length - 1] || {};
+          updated[exIdx] = { ...ex, sets: [...ex.sets, { reps: last.reps || '', load: last.load || '', rpe: last.rpe || '' }] };
+          return updated;
+        });
+      };
+
+      const updateSet = (exIdx, setIdx, field, value) => {
+        setExercises(prev => {
+          const updated = [...prev];
+          updated[exIdx] = { ...updated[exIdx], sets: updated[exIdx].sets.map((s, i) => i === setIdx ? { ...s, [field]: value } : s) };
+          return updated;
+        });
+      };
+
+      const removeSet = (exIdx, setIdx) => {
+        setExercises(prev => {
+          const updated = [...prev];
+          updated[exIdx] = { ...updated[exIdx], sets: updated[exIdx].sets.filter((_, i) => i !== setIdx) };
+          return updated;
+        });
+      };
+
+      const totalSets = exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+
+      const handleFinish = () => {
+        if (exercises.length === 0) { onBack(); return; }
+        const now = new Date();
+        const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).substring(0, 3);
+        const sessionExercises = exercises
+          .filter(ex => ex.sets.length > 0)
+          .map(ex => ({
+            name: ex.name,
+            sets: ex.sets.length,
+            reps: ex.sets.map(s => s.reps).filter(Boolean).join('/') || '—',
+            load: ex.sets[ex.sets.length - 1]?.load || '',
+            rpe: ex.sets[ex.sets.length - 1]?.rpe || '',
+            hitTarget: 'Yes',
+            notes: ''
+          }));
+        saveSession(now, dayName, sessionExercises);
+        onBack();
+      };
+
+      const handleClose = () => {
+        if (exercises.length > 0 && !confirm('Discard this workout?')) return;
+        onBack();
+      };
+
+      return (
+        <div className="editor-screen">
+          {/* Header */}
+          <div className="editor-header">
+            <button className="back-btn" onClick={handleClose}>✕</button>
+            <div className="editor-title">Quick Workout</div>
+            <button className="save-btn"
+              style={{ color: exercises.length > 0 ? 'var(--accent)' : 'var(--muted2)' }}
+              onClick={handleFinish}>
+              Finish
+            </button>
+          </div>
+
+          {/* Timer bar */}
+          <div className="qw-timer-bar">
+            <div>
+              <div className="qw-timer-val">{formatTime(elapsed)}</div>
+              <div className="qw-meta-label">Elapsed</div>
+            </div>
+            <div className="qw-stat">
+              <div className="qw-stat-val">{totalSets}</div>
+              <div className="qw-meta-label">Sets Logged</div>
+            </div>
+            <div className="qw-stat">
+              <div className="qw-stat-val">{exercises.length}</div>
+              <div className="qw-meta-label">Exercises</div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="editor-content">
+
+            {exercises.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>⚡</div>
+                <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 8, letterSpacing: '-0.3px' }}>
+                  Ready when you are
+                </div>
+                <div style={{ fontSize: 14, color: 'var(--muted)' }}>
+                  Add your first exercise below to get started
+                </div>
+              </div>
+            )}
+
+            {exercises.map((ex, exIdx) => (
+              <div key={ex.id} className="exercise-item">
+                {/* Exercise header */}
+                <div className="exercise-name">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0 }}>
+                    <button className="move-btn" aria-label="Move exercise up" onClick={() => moveExercise(exIdx, -1)} disabled={exIdx === 0}>▲</button>
+                    <button className="move-btn" aria-label="Move exercise down" onClick={() => moveExercise(exIdx, 1)} disabled={exIdx === exercises.length - 1}>▼</button>
+                  </div>
+                  <span style={{ flex: 1 }}>{ex.name}</span>
+                  <button onClick={() => removeExercise(exIdx)}
+                    aria-label={`Remove ${ex.name}`}
+                    style={{ background: 'none', border: 'none', color: 'var(--muted2)', fontSize: 20, cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>
+                    ×
+                  </button>
+                </div>
+
+                {/* Set table */}
+                {ex.sets.length > 0 && (
+                  <div style={{ marginBottom: 8 }}>
+                    {/* Column headers */}
+                    <div className="set-grid" style={{ marginBottom: 4, paddingBottom: 4, borderBottom: '1px solid var(--border)' }}>
+                      <div className="set-col-header">#</div>
+                      <div className="set-col-header">Reps</div>
+                      <div className="set-col-header">Load</div>
+                      <div className="set-col-header">RPE</div>
+                      <div />
+                    </div>
+                    {ex.sets.map((set, setIdx) => (
+                      <div key={setIdx} className="set-grid">
+                        <div className="set-num">{setIdx + 1}</div>
+                        <input className="set-input" type="text" inputMode="numeric"
+                          placeholder="—" value={set.reps}
+                          onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value)} />
+                        <input className="set-input" type="text"
+                          placeholder="—" value={set.load}
+                          onChange={(e) => updateSet(exIdx, setIdx, 'load', e.target.value)} />
+                        <input className="set-input" type="text" inputMode="decimal"
+                          placeholder="—" value={set.rpe}
+                          onChange={(e) => updateSet(exIdx, setIdx, 'rpe', e.target.value)} />
+                        <button className="set-remove-btn" onClick={() => removeSet(exIdx, setIdx)}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button className="log-set-btn" onClick={() => logSet(exIdx)}>
+                  + Log Set{ex.sets.length > 0 ? ` ${ex.sets.length + 1}` : ''}
+                </button>
+              </div>
+            ))}
+
+            {/* Add exercise row */}
+            <div className="add-btns-row" style={{ marginTop: exercises.length > 0 ? 4 : 0 }}>
+              <button className="btn btn-secondary btn-small" onClick={() => { setShowPicker(true); setShowNewExForm(false); }}>
+                📚 From Library
+              </button>
+              <button className="btn btn-secondary btn-small" onClick={() => { setShowNewExForm(f => !f); setShowPicker(false); }}>
+                + New Exercise
+              </button>
+            </div>
+
+            {showNewExForm && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+                <input type="text" className="input" style={{ marginBottom: 0, flex: 1 }}
+                  placeholder="Exercise name…" value={newExName}
+                  onChange={(e) => setNewExName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && newExName.trim()) addExercise(newExName.trim()); }}
+                  autoFocus />
+                <button className="btn" style={{ padding: '13px 16px', flexShrink: 0 }}
+                  onClick={() => newExName.trim() && addExercise(newExName.trim())}>
+                  Add
+                </button>
+              </div>
+            )}
+
+            {exercises.length > 0 && (
+              <button className="btn btn-block btn-success" style={{ marginTop: 24 }} onClick={handleFinish}>
+                Finish & Save Workout
+              </button>
+            )}
+          </div>
+
+          {showPicker && (
+            <ExercisePicker
+              onSelect={(ex) => addExercise(ex.name)}
+              onClose={() => setShowPicker(false)} />
+          )}
+        </div>
+      );
+    }
+
+    function PastWorkoutScreen({ onBack }) {
+      const yesterday = () => {
+        const d = new Date(); d.setDate(d.getDate() - 1);
+        return d.toISOString().split('T')[0];
+      };
+      const [date, setDate] = useState(yesterday);
+      const [exercises, setExercises] = useState([
+        { name: '', sets: 3, reps: '', load: '', rpe: '', hitTarget: 'Yes', notes: '' }
+      ]);
+      const [sessionNotes, setSessionNotes] = useState('');
+      const [saved, setSaved] = useState(false);
+
+      const dayName = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }).substring(0, 3);
+      const maxDate = new Date().toISOString().split('T')[0];
+
+      const update = (i, field, val) => {
+        setExercises(prev => prev.map((ex, idx) => idx === i ? { ...ex, [field]: val } : ex));
+      };
+      const addExercise = () => setExercises(prev => [
+        ...prev, { name: '', sets: 3, reps: '', load: '', rpe: '', hitTarget: 'Yes', notes: '' }
+      ]);
+      const removeExercise = (i) => setExercises(prev => prev.filter((_, idx) => idx !== i));
+      const moveExercise = (i, dir) => setExercises(prev => {
+        const arr = [...prev]; const j = i + dir;
+        if (j < 0 || j >= arr.length) return prev;
+        [arr[i], arr[j]] = [arr[j], arr[i]]; return arr;
+      });
+
+      const handleSave = () => {
+        const valid = exercises.filter(ex => ex.name.trim());
+        if (valid.length === 0) return;
+        saveSession(date, dayName, valid, sessionNotes);
+        setSaved(true);
+        setTimeout(onBack, 700);
+      };
+
+      return (
+        <div className="editor-screen">
+          <div className="editor-header">
+            <button className="back-btn" onClick={onBack}>← Back</button>
+            <div className="editor-title">Log Past Workout</div>
+            <div style={{ width: 60 }} />
+          </div>
+          <div className="editor-content">
+
+            {/* Date picker */}
+            <div className="card" style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Workout Date</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)' }}>{dayName}</div>
+                </div>
+                <input
+                  type="date"
+                  max={maxDate}
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  style={{
+                    background: 'var(--surface3)', border: '1px solid var(--border)',
+                    borderRadius: 8, color: 'var(--text)', padding: '8px 12px',
+                    fontSize: 14, fontFamily: 'var(--mono)', outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="section-title">Exercises</div>
+
+            {exercises.map((ex, i) => (
+              <div key={i} className="exercise-item">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <button className="move-btn" onClick={() => moveExercise(i, -1)} disabled={i === 0}>▲</button>
+                    <button className="move-btn" onClick={() => moveExercise(i, 1)} disabled={i === exercises.length - 1}>▼</button>
+                  </div>
+                  <input type="text" className="field-input" placeholder="Exercise name"
+                    value={ex.name} onChange={e => update(i, 'name', e.target.value)}
+                    style={{ flex: 1, fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600 }} />
+                </div>
+                <div className="exercise-fields">
+                  <div className="field">
+                    <label className="field-label">Sets</label>
+                    <input type="number" className="field-input" value={ex.sets}
+                      onChange={e => update(i, 'sets', parseInt(e.target.value) || 0)} />
+                  </div>
+                  <div className="field">
+                    <label className="field-label">Reps</label>
+                    <input type="text" className="field-input" value={ex.reps}
+                      onChange={e => update(i, 'reps', e.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label className="field-label">Load</label>
+                    <input type="text" className="field-input" value={ex.load}
+                      onChange={e => update(i, 'load', e.target.value)} />
+                  </div>
+                </div>
+                <div className="exercise-fields">
+                  <div className="field">
+                    <label className="field-label">RPE</label>
+                    <input type="text" className="field-input" value={ex.rpe}
+                      onChange={e => update(i, 'rpe', e.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label className="field-label">Hit Target</label>
+                    <select className="hit-target-select" value={ex.hitTarget}
+                      onChange={e => update(i, 'hitTarget', e.target.value)}>
+                      <option>Yes</option>
+                      <option>Partial</option>
+                      <option>No</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label className="field-label">Notes</label>
+                    <input type="text" className="field-input" value={ex.notes}
+                      onChange={e => update(i, 'notes', e.target.value)} />
+                  </div>
+                </div>
+                <button className="btn btn-danger btn-small" onClick={() => removeExercise(i)}>
+                  Remove
+                </button>
+              </div>
+            ))}
+
+            <button className="quick-add-btn" onClick={addExercise}>+ Add Exercise</button>
+
+            <div style={{ marginBottom: 16 }}>
+              <label className="label">Session Notes</label>
+              <input type="text" className="input" placeholder="How did it feel?"
+                value={sessionNotes} onChange={e => setSessionNotes(e.target.value)} />
+            </div>
+
+            <button
+              className={`btn btn-block ${saved ? 'btn-success' : ''}`}
+              onClick={handleSave}
+              style={{ animation: saved ? 'pulseCheck 0.4s ease' : 'none' }}
+              disabled={saved}
+            >
+              {saved ? '✓ Saved!' : 'Save Workout'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function PlansScreen({ onEditPlan, onNewPlan }) {
+      const [plans, setPlans] = useState(getPlans());
+      const [activeId, setActiveId] = useState(lsRaw('wt_activePlanId'));
+
+      const handleSetActive = (planId) => {
+        setActivePlanId(planId);
+        setActiveId(planId);
+        setPlans(getPlans());
+      };
+
+      const daysForPlan = (plan) =>
+        DAY_KEYS.filter(d => plan.schedule && plan.schedule[d]).join(' · ');
+
+      return (
+        <div className="container">
+          <div className="header">Plans</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20, lineHeight: 1.5 }}>
+            The active plan drives Today and Log screens.
+          </div>
+          {plans.map(plan => (
+            <div key={plan.id} className={`plan-row ${plan.id === activeId ? 'is-active' : ''}`}>
+              {plan.id === activeId && <div className="active-dot" />}
+              <div className="plan-info">
+                <div className="plan-name">{plan.name}</div>
+                <div className="plan-meta">
+                  {plan.workoutsPerWeek}×/wk · {daysForPlan(plan)}
+                </div>
+              </div>
+              {plan.id === activeId && <div className="active-badge">Active</div>}
+              <div className="plan-actions">
+                {plan.id !== activeId && (
+                  <button className="icon-btn" onClick={() => handleSetActive(plan.id)}>
+                    Set Active
+                  </button>
+                )}
+                <button className="icon-btn" onClick={() => onEditPlan(plan.id)}>Edit</button>
+              </div>
+            </div>
+          ))}
+          <button className="btn btn-secondary btn-block" onClick={onNewPlan}>+ New Plan</button>
+        </div>
+      );
+    }
+
+    // ─── Picker Components ───
+
+    function usePickerEffects(onClose) {
+      useEffect(() => {
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', onKey);
+        return () => {
+          document.body.style.overflow = prev;
+          document.removeEventListener('keydown', onKey);
+        };
+      }, [onClose]);
+    }
+
+    function TemplatePicker({ currentPlanId, onSelect, onClose }) {
+      usePickerEffects(onClose);
+      const [search, setSearch] = useState('');
+      const allTemplates = getAllTemplates().filter(t => t._planId !== currentPlanId);
+      const filtered = allTemplates.filter(t =>
+        !search ||
+        t.name.toLowerCase().includes(search.toLowerCase()) ||
+        t._planName.toLowerCase().includes(search.toLowerCase())
+      );
+      return (
+        <div className="picker-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+          <div className="picker-sheet">
+            <div className="picker-handle" />
+            <div className="picker-title-row">
+              <div className="picker-title">Import Template</div>
+              <button className="picker-close" onClick={onClose}>×</button>
+            </div>
+            <div className="picker-search">
+              <input type="text" className="input" style={{ marginBottom: 0 }}
+                placeholder="Search templates…" value={search}
+                onChange={(e) => setSearch(e.target.value)} autoFocus />
+            </div>
+            <div className="picker-list">
+              {filtered.length === 0 ? (
+                <div className="picker-empty">
+                  {allTemplates.length === 0
+                    ? 'No templates in other plans yet.\nCreate a template in another plan first.'
+                    : 'No templates match your search.'}
+                </div>
+              ) : filtered.map((t, i) => (
+                <div key={i} className="picker-item" onClick={() => onSelect(t)}>
+                  <div className="picker-item-name">{t.name}</div>
+                  <div className="picker-item-meta">
+                    From "{t._planName}" · {(t.exercises || []).length} exercises
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ExercisePicker({ onSelect, onClose }) {
+      usePickerEffects(onClose);
+      const [search, setSearch] = useState('');
+      const allExercises = getAllKnownExercises();
+      const filtered = allExercises.filter(ex =>
+        !search || ex.name.toLowerCase().includes(search.toLowerCase())
+      );
+      return (
+        <div className="picker-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+          <div className="picker-sheet">
+            <div className="picker-handle" />
+            <div className="picker-title-row">
+              <div className="picker-title">Exercise Library</div>
+              <button className="picker-close" onClick={onClose}>×</button>
+            </div>
+            <div className="picker-search">
+              <input type="text" className="input" style={{ marginBottom: 0 }}
+                placeholder="Search exercises…" value={search}
+                onChange={(e) => setSearch(e.target.value)} autoFocus />
+            </div>
+            <div className="picker-list">
+              {filtered.length === 0 ? (
+                <div className="picker-empty">
+                  {allExercises.length === 0
+                    ? 'No exercises saved yet.\nLog a session or build a template first.'
+                    : 'No exercises match your search.'}
+                </div>
+              ) : filtered.map((ex, i) => (
+                <div key={i} className="picker-item" onClick={() => onSelect(ex)}>
+                  <div className="picker-item-name">{ex.name}</div>
+                  <div className="picker-item-meta">
+                    {ex.sets} sets × {ex.reps} reps{ex.rpe ? ` · RPE ${ex.rpe}` : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Plan Editor ───
+
+    function PlanEditorScreen({ planId, onBack }) {
+      const allPlans = getPlans();
+      const existingPlan = planId ? allPlans.find(p => p.id === planId) : null;
+      const activePlan = getActivePlan();
+
+      const [plan, setPlan] = useState(existingPlan || {
+        id: generateId(),
+        name: 'New Plan',
+        workoutsPerWeek: 4,
+        schedule: { Mon: null, Tue: null, Wed: null, Thu: null, Fri: null, Sat: null, Sun: null },
+        workouts: []
+      });
+      const [isActive, setIsActive] = useState(activePlan?.id === plan.id);
+      const [showImportPicker, setShowImportPicker] = useState(false);
+
+      const handleImportTemplate = (source) => {
+        const copied = {
+          ...source, id: generateId(),
+          exercises: (source.exercises || []).map(ex => ({ ...ex })),
+        };
+        delete copied._planName; delete copied._planId;
+        setPlan({ ...plan, workouts: [...(plan.workouts || []), copied] });
+        setShowImportPicker(false);
+      };
+
+      const [planSaveError, setPlanSaveError] = useState('');
+
+      const handleSave = () => {
+        if (!plan.name.trim()) { setPlanSaveError('Plan name cannot be empty.'); return; }
+        setPlanSaveError('');
+        savePlan(plan);
+        if (isActive) setActivePlanId(plan.id);
+        onBack();
+      };
+
+      const handleDelete = () => {
+        if (confirm('Delete this plan? This cannot be undone.')) {
+          deletePlan(plan.id);
+          onBack();
+        }
+      };
+
+      const updateSchedule = (day, val) =>
+        setPlan({ ...plan, schedule: { ...plan.schedule, [day]: val || null } });
+
+      const getWorkoutOptions = () =>
+        [{ id: null, name: 'Rest / Off' }, ...(plan.workouts || [])];
+
+      return (
+        <div className="editor-screen">
+          <div className="editor-header">
+            <button className="back-btn" onClick={onBack}>← Back</button>
+            <div className="editor-title">{plan.name}</div>
+            <button className="save-btn" onClick={handleSave}>Save</button>
+          </div>
+          <div className="editor-content">
+            <div style={{ marginBottom: 16 }}>
+              <label className="label" htmlFor="plan-name-input">Plan Name</label>
+              <input id="plan-name-input" type="text" className="input" value={plan.name}
+                onChange={(e) => { setPlan({ ...plan, name: e.target.value }); setPlanSaveError(''); }} />
+              {planSaveError && (
+                <div role="alert" style={{ color: 'var(--danger)', fontSize: 13, marginTop: -8, marginBottom: 8, fontWeight: 600 }}>
+                  {planSaveError}
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <button className={`toggle-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setIsActive(!isActive)}>
+                {isActive ? '✓ Active Plan' : 'Set as Active'}
+              </button>
+            </div>
+
+            <div className="form-section">
+              <div className="form-section-title">Weekly Schedule</div>
+              {DAY_KEYS.map(day => (
+                <div key={day} className="schedule-row">
+                  <div className="schedule-day-label">{day}</div>
+                  <select className="schedule-select input"
+                    value={plan.schedule?.[day] || ''}
+                    onChange={(e) => updateSchedule(day, e.target.value)}>
+                    {getWorkoutOptions().map(opt => (
+                      <option key={opt.id || 'null'} value={opt.id || ''}>{opt.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            <div className="form-section">
+              <div className="form-section-title">Workout Templates</div>
+              {(plan.workouts || []).map(template => (
+                <div key={template.id} className="template-row">
+                  <div className="template-info">
+                    <div className="template-name">{template.name}</div>
+                    <div className="template-meta">{(template.exercises || []).length} exercises</div>
+                  </div>
+                  <button className="icon-btn"
+                    onClick={() => onBack({ screen: 'editTemplate', planId: plan.id, templateId: template.id })}>
+                    Edit
+                  </button>
+                  <button className="icon-btn"
+                    onClick={() => setPlan({ ...plan, workouts: plan.workouts.filter(w => w.id !== template.id) })}>
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <div className="add-btns-row">
+                <button className="btn btn-secondary btn-small"
+                  onClick={() => setShowImportPicker(true)}>
+                  📋 Import Template
+                </button>
+                <button className="btn btn-secondary btn-small"
+                  onClick={() => onBack({ screen: 'editTemplate', planId: plan.id, templateId: null })}>
+                  + New Template
+                </button>
+              </div>
+            </div>
+
+            {showImportPicker && (
+              <TemplatePicker currentPlanId={plan.id}
+                onSelect={handleImportTemplate}
+                onClose={() => setShowImportPicker(false)} />
+            )}
+
+            {existingPlan && (
+              <button className="btn btn-danger btn-block" onClick={handleDelete}>
+                Delete Plan
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Template Editor ───
+
+    function WorkoutTemplateEditor({ planId, templateId, onBack }) {
+      const plans = getPlans();
+      const plan = plans.find(p => p.id === planId);
+      const existingTemplate = templateId ? (plan.workouts || []).find(w => w.id === templateId) : null;
+
+      const [template, setTemplate] = useState(existingTemplate || {
+        id: generateId(), name: 'New Workout', exercises: []
+      });
+      const [showExercisePicker, setShowExercisePicker] = useState(false);
+
+      const handlePickExercise = (ex) => {
+        setTemplate({
+          ...template,
+          exercises: [...(template.exercises || []), {
+            name: ex.name, sets: ex.sets || 3, reps: ex.reps || '8-10',
+            load: '', rpe: ex.rpe || '', notes: ex.notes || ''
+          }]
+        });
+        setShowExercisePicker(false);
+      };
+
+      const [tmplSaveError, setTmplSaveError] = useState('');
+
+      const handleSave = () => {
+        if (!template.name.trim()) { setTmplSaveError('Workout name cannot be empty.'); return; }
+        const unnamedEx = (template.exercises || []).some(ex => !ex.name.trim());
+        if (unnamedEx) { setTmplSaveError('All exercises need a name.'); return; }
+        setTmplSaveError('');
+        const updated = { ...plan };
+        const idx = (updated.workouts || []).findIndex(w => w.id === template.id);
+        if (idx >= 0) updated.workouts[idx] = template;
+        else { if (!updated.workouts) updated.workouts = []; updated.workouts.push(template); }
+        savePlan(updated);
+        onBack({ screen: 'editPlan', planId });
+      };
+
+      const handleAddExercise = () =>
+        setTemplate({ ...template, exercises: [...(template.exercises || []), { name: '', sets: 3, reps: '8-10', load: '', rpe: '', notes: '' }] });
+
+      const handleUpdateExercise = (idx, field, value) => {
+        const updated = { ...template };
+        updated.exercises[idx][field] = value;
+        setTemplate(updated);
+      };
+
+      const handleRemoveExercise = (idx) =>
+        setTemplate({ ...template, exercises: (template.exercises || []).filter((_, i) => i !== idx) });
+
+      const handleMoveExercise = (idx, dir) => {
+        const exs = [...(template.exercises || [])]; const j = idx + dir;
+        if (j < 0 || j >= exs.length) return;
+        [exs[idx], exs[j]] = [exs[j], exs[idx]];
+        setTemplate({ ...template, exercises: exs });
+      };
+
+      return (
+        <div className="editor-screen">
+          <div className="editor-header">
+            <button className="back-btn" onClick={() => onBack({ screen: 'editPlan', planId })}>← Back</button>
+            <div className="editor-title">Workout</div>
+            <button className="save-btn" onClick={handleSave}>Save</button>
+          </div>
+          <div className="editor-content">
+            <div style={{ marginBottom: 16 }}>
+              <label className="label" htmlFor="tmpl-name-input">Workout Name</label>
+              <input id="tmpl-name-input" type="text" className="input" value={template.name}
+                onChange={(e) => { setTemplate({ ...template, name: e.target.value }); setTmplSaveError(''); }} />
+              {tmplSaveError && (
+                <div role="alert" style={{ color: 'var(--danger)', fontSize: 13, marginTop: -8, marginBottom: 8, fontWeight: 600 }}>
+                  {tmplSaveError}
+                </div>
+              )}
+            </div>
+
+            <div className="form-section">
+              <div className="form-section-title">Exercises</div>
+              {(template.exercises || []).map((ex, i) => (
+                <div key={i} className="exercise-item">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <button className="move-btn" onClick={() => handleMoveExercise(i, -1)} disabled={i === 0}>▲</button>
+                      <button className="move-btn" onClick={() => handleMoveExercise(i, 1)} disabled={i === (template.exercises || []).length - 1}>▼</button>
+                    </div>
+                    <input type="text" className="field-input" placeholder="Exercise name"
+                      value={ex.name}
+                      onChange={(e) => handleUpdateExercise(i, 'name', e.target.value)}
+                      style={{ flex: 1, fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600 }} />
+                  </div>
+                  <div className="exercise-fields">
+                    <div className="field">
+                      <label className="field-label">Sets</label>
+                      <input type="number" className="field-input" value={ex.sets}
+                        onChange={(e) => handleUpdateExercise(i, 'sets', parseInt(e.target.value) || 0)} />
+                    </div>
+                    <div className="field">
+                      <label className="field-label">Reps</label>
+                      <input type="text" className="field-input" value={ex.reps}
+                        onChange={(e) => handleUpdateExercise(i, 'reps', e.target.value)} />
+                    </div>
+                    <div className="field">
+                      <label className="field-label">Load</label>
+                      <input type="text" className="field-input" value={ex.load}
+                        onChange={(e) => handleUpdateExercise(i, 'load', e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="exercise-fields">
+                    <div className="field">
+                      <label className="field-label">RPE</label>
+                      <input type="text" className="field-input" value={ex.rpe}
+                        onChange={(e) => handleUpdateExercise(i, 'rpe', e.target.value)} />
+                    </div>
+                    <div className="field" style={{ gridColumn: 'span 2' }}>
+                      <label className="field-label">Notes</label>
+                      <input type="text" className="field-input" value={ex.notes}
+                        onChange={(e) => handleUpdateExercise(i, 'notes', e.target.value)} />
+                    </div>
+                  </div>
+                  <button className="btn btn-danger btn-small"
+                    onClick={() => handleRemoveExercise(i)}>
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <div className="add-btns-row">
+                <button className="btn btn-secondary btn-small"
+                  onClick={() => setShowExercisePicker(true)}>
+                  📚 From Library
+                </button>
+                <button className="btn btn-secondary btn-small"
+                  onClick={handleAddExercise}>
+                  + New Exercise
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {showExercisePicker && (
+            <ExercisePicker onSelect={handlePickExercise}
+              onClose={() => setShowExercisePicker(false)} />
+          )}
+        </div>
+      );
+    }
+
+    // ============================================
+    // ERROR BOUNDARY
+    // ============================================
+
+    class ErrorBoundary extends React.Component {
+      constructor(props) { super(props); this.state = { error: null }; }
+      static getDerivedStateFromError(error) { return { error }; }
+      render() {
+        if (this.state.error) {
+          return (
+            <div style={{ padding: 32, fontFamily: 'var(--sans)', color: 'var(--text)', background: 'var(--bg)', minHeight: '100vh' }}>
+              <div style={{ fontSize: 28, marginBottom: 12 }}>⚠️</div>
+              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Something went wrong</div>
+              <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20, fontFamily: 'var(--mono)' }}>
+                {this.state.error.message}
+              </div>
+              <button className="btn" onClick={() => window.location.reload()}>Reload App</button>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
+
+    // ============================================
+    // MAIN APP
+    // ============================================
+
+    function App() {
+      const [view, setView] = useState({ screen: 'main', tab: 'today' });
+
+      const handleNavigateToEditor = (planId) => setView({ screen: 'editPlan', planId });
+      const handleNavigateToTemplate = (nextView) => setView(nextView);
+
+      const handleBackFromEditor = (nextView) => {
+        if (nextView && nextView.screen) setView(nextView);
+        else setView({ screen: 'main', tab: 'plans' });
+      };
+
+      if (view.screen === 'editPlan') {
+        return <PlanEditorScreen planId={view.planId} onBack={handleBackFromEditor} />;
+      }
+
+      if (view.screen === 'editTemplate') {
+        return (
+          <WorkoutTemplateEditor planId={view.planId} templateId={view.templateId}
+            onBack={handleNavigateToTemplate} />
+        );
+      }
+
+      if (view.screen === 'historyDetail') {
+        return (
+          <HistoryDetailScreen
+            date={view.date}
+            session={view.session}
+            onBack={() => setView({ screen: 'main', tab: 'history' })}
+          />
+        );
+      }
+
+      if (view.screen === 'quickWorkout') {
+        return (
+          <QuickWorkoutScreen
+            onBack={() => setView({ screen: 'main', tab: 'log' })}
+          />
+        );
+      }
+
+      if (view.screen === 'pastWorkout') {
+        return (
+          <PastWorkoutScreen
+            onBack={() => setView({ screen: 'main', tab: 'history' })}
+          />
+        );
+      }
+
+      const tabs = [
+        { id: 'today', icon: '⚡', label: 'Today', ariaLabel: 'Today tab' },
+        { id: 'log', icon: '✏️', label: 'Log', ariaLabel: 'Log workout tab' },
+        { id: 'progress', icon: '📈', label: 'Progress', ariaLabel: 'Progress tab' },
+        { id: 'history', icon: '📋', label: 'History', ariaLabel: 'History tab' },
+        { id: 'plans', icon: '🗓️', label: 'Plans', ariaLabel: 'Plans tab' },
+      ];
+
+      return (
+        <>
+          {view.tab === 'today' && (
+            <TodayScreen
+              onStartWorkout={() => setView({ screen: 'main', tab: 'log', autoLoad: true })}
+            />
+          )}
+          {view.tab === 'log' && (
+            <LogScreen
+              onQuickWorkout={() => setView({ screen: 'quickWorkout' })}
+              autoLoad={view.autoLoad}
+            />
+          )}
+          {view.tab === 'progress' && <ProgressScreen />}
+          {view.tab === 'history' && (
+            <HistoryScreen
+              onViewDetail={(date, sess) => setView({ screen: 'historyDetail', date, session: sess })}
+              onLogPast={() => setView({ screen: 'pastWorkout' })}
+            />
+          )}
+          {view.tab === 'plans' && (
+            <PlansScreen
+              onEditPlan={handleNavigateToEditor}
+              onNewPlan={() => setView({ screen: 'editPlan', planId: null })}
+            />
+          )}
+
+          <div className="nav-bar">
+            {tabs.map(t => (
+              <button
+                key={t.id}
+                className={`nav-item ${view.tab === t.id ? 'active' : ''}`}
+                onClick={() => setView({ screen: 'main', tab: t.id })}
+                aria-label={t.ariaLabel}
+                aria-current={view.tab === t.id ? 'page' : undefined}
+              >
+                <div className="nav-icon" aria-hidden="true">{t.icon}</div>
+                <div>{t.label}</div>
+              </button>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    ReactDOM.render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>,
+      document.getElementById('root')
+    );
+  </script>
+</body>
+</html>
