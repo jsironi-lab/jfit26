@@ -478,6 +478,10 @@
       display: grid; grid-template-columns: 16px 72px 1fr 1fr 1fr 22px;
       gap: 5px; align-items: center; margin-bottom: 5px;
     }
+    .set-grid-tbl {
+      display: grid; grid-template-columns: 46px 30px 1fr 1fr 1fr 22px;
+      gap: 5px; align-items: center; margin-bottom: 5px;
+    }
     .set-tgt {
       font-family: var(--mono); font-size: 10px; color: var(--muted2);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1702,7 +1706,7 @@
           const exList = workout?.exercises || [];
           if (exList.length > 0) {
             setExercises(exList.map(ex => {
-              const target = { sets: ex.sets, reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || '' };
+              const target = { sets: ex.sets, reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || '', notes: ex.notes || '' };
               const setCount = parseInt(ex.sets) || 1;
               const sets = Array.from({ length: setCount }, () => ({
                 reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || ''
@@ -1721,7 +1725,7 @@
         const exList = workout?.exercises || [];
         if (exList.length > 0) {
           setExercises(exList.map(ex => {
-            const target = { sets: ex.sets, reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || '' };
+            const target = { sets: ex.sets, reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || '', notes: ex.notes || '' };
             const setCount = parseInt(ex.sets) || 1;
             const sets = Array.from({ length: setCount }, () => ({
               reps: ex.reps || '', load: ex.load || '', rpe: ex.rpe || ''
@@ -1850,50 +1854,84 @@
                       style={{ flex: 1, fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600 }} />
                   </div>
 
-                  {/* Target summary row */}
-                  {ex._target && (
-                    <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 700,
-                      marginBottom: 8, background: 'rgba(99,102,241,0.1)', borderRadius: 6,
-                      padding: '5px 10px', letterSpacing: '0.2px' }}>
-                      Target: {[
-                        ex._target.sets && `${ex._target.sets} sets`,
-                        ex._target.reps && `${ex._target.reps} reps`,
-                        ex._target.load && `@ ${ex._target.load} lbs`,
-                        ex._target.rpe && `RPE ${ex._target.rpe}`
-                      ].filter(Boolean).join(' · ')}
-                    </div>
-                  )}
-
-                  {/* Set column headers */}
-                  {ex.sets.length > 0 && (
-                    <div className="set-grid"
-                      style={{ marginBottom: 5, paddingBottom: 5, borderBottom: '1px solid var(--border)' }}>
-                      <div style={colHdr}>#</div>
-                      <div style={colHdr}>Reps</div>
-                      <div style={colHdr}>Load</div>
-                      <div style={colHdr}>RPE</div>
-                      <div />
-                    </div>
-                  )}
-
-                  {/* Set rows */}
-                  {ex.sets.map((s, si) => {
-                    const hit = setHit(s, ex._target);
-                    return (
-                      <div key={si} className="set-grid">
-                        <div className="set-num" style={{ color: hit === true ? 'var(--success)' : hit === false ? 'var(--danger)' : 'var(--muted2)' }}>
-                          {si + 1}
-                        </div>
-                        <input className="set-input" type="text" inputMode="decimal" value={s.reps}
-                          onChange={e => updateSet(i, si, 'reps', e.target.value)} placeholder="—" />
-                        <input className="set-input" type="text" inputMode="decimal" value={s.load}
-                          onChange={e => updateSet(i, si, 'load', e.target.value)} placeholder="—" />
-                        <input className="set-input" type="text" inputMode="decimal" value={s.rpe}
-                          onChange={e => updateSet(i, si, 'rpe', e.target.value)} placeholder="—" />
-                        <button className="set-remove-btn" aria-label={`Remove set ${si + 1}`} onClick={() => removeSet(i, si)}>×</button>
+                  {ex._target ? (
+                    <>
+                      {/* Column headers */}
+                      <div className="set-grid-tbl" style={{ marginBottom: 4, paddingBottom: 4, borderBottom: '1px solid var(--border)' }}>
+                        <div />
+                        <div style={colHdr}>Sets</div>
+                        <div style={colHdr}>Reps</div>
+                        <div style={colHdr}>Load</div>
+                        <div style={colHdr}>RPE</div>
+                        <div />
                       </div>
-                    );
-                  })}
+                      {/* Target row */}
+                      <div className="set-grid-tbl" style={{ marginBottom: ex._target.notes ? 3 : 8 }}>
+                        <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Target</div>
+                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--fg)' }}>{ex._target.sets || '—'}</div>
+                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--fg)' }}>{ex._target.reps || '—'}</div>
+                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--fg)' }}>{ex._target.load || '—'}</div>
+                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--fg)' }}>{ex._target.rpe || '—'}</div>
+                        <div />
+                      </div>
+                      {ex._target.notes && (
+                        <div style={{ fontSize: 11, color: 'var(--muted)', fontStyle: 'italic', marginBottom: 8, paddingLeft: 2 }}>
+                          {ex._target.notes}
+                        </div>
+                      )}
+                      <div style={{ height: 1, background: 'var(--border)', marginBottom: 6 }} />
+                      {/* Set rows */}
+                      {ex.sets.map((s, si) => {
+                        const hit = setHit(s, ex._target);
+                        return (
+                          <div key={si} className="set-grid-tbl">
+                            <div style={{ fontSize: 12, fontWeight: 700, color: hit === true ? 'var(--success)' : hit === false ? 'var(--danger)' : 'var(--muted2)' }}>
+                              Set {si + 1}
+                            </div>
+                            <div />
+                            <input className="set-input" type="text" inputMode="decimal" value={s.reps}
+                              onChange={e => updateSet(i, si, 'reps', e.target.value)} placeholder="—" />
+                            <input className="set-input" type="text" inputMode="decimal" value={s.load}
+                              onChange={e => updateSet(i, si, 'load', e.target.value)} placeholder="—" />
+                            <input className="set-input" type="text" inputMode="decimal" value={s.rpe}
+                              onChange={e => updateSet(i, si, 'rpe', e.target.value)} placeholder="—" />
+                            <button className="set-remove-btn" aria-label={`Remove set ${si + 1}`} onClick={() => removeSet(i, si)}>×</button>
+                          </div>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      {/* Column headers (no target) */}
+                      {ex.sets.length > 0 && (
+                        <div className="set-grid" style={{ marginBottom: 5, paddingBottom: 5, borderBottom: '1px solid var(--border)' }}>
+                          <div style={colHdr}>#</div>
+                          <div style={colHdr}>Reps</div>
+                          <div style={colHdr}>Load</div>
+                          <div style={colHdr}>RPE</div>
+                          <div />
+                        </div>
+                      )}
+                      {/* Set rows */}
+                      {ex.sets.map((s, si) => {
+                        const hit = setHit(s, ex._target);
+                        return (
+                          <div key={si} className="set-grid">
+                            <div className="set-num" style={{ color: hit === true ? 'var(--success)' : hit === false ? 'var(--danger)' : 'var(--muted2)' }}>
+                              {si + 1}
+                            </div>
+                            <input className="set-input" type="text" inputMode="decimal" value={s.reps}
+                              onChange={e => updateSet(i, si, 'reps', e.target.value)} placeholder="—" />
+                            <input className="set-input" type="text" inputMode="decimal" value={s.load}
+                              onChange={e => updateSet(i, si, 'load', e.target.value)} placeholder="—" />
+                            <input className="set-input" type="text" inputMode="decimal" value={s.rpe}
+                              onChange={e => updateSet(i, si, 'rpe', e.target.value)} placeholder="—" />
+                            <button className="set-remove-btn" aria-label={`Remove set ${si + 1}`} onClick={() => removeSet(i, si)}>×</button>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
 
                   <button className="log-set-btn" onClick={() => addSet(i)}>+ Log Set</button>
 
