@@ -1850,12 +1850,25 @@
                       style={{ flex: 1, fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600 }} />
                   </div>
 
+                  {/* Target summary row */}
+                  {ex._target && (
+                    <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 700,
+                      marginBottom: 8, background: 'rgba(99,102,241,0.1)', borderRadius: 6,
+                      padding: '5px 10px', letterSpacing: '0.2px' }}>
+                      Target: {[
+                        ex._target.sets && `${ex._target.sets} sets`,
+                        ex._target.reps && `${ex._target.reps} reps`,
+                        ex._target.load && `@ ${ex._target.load} lbs`,
+                        ex._target.rpe && `RPE ${ex._target.rpe}`
+                      ].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
+
                   {/* Set column headers */}
                   {ex.sets.length > 0 && (
-                    <div className={ex._target ? 'set-grid-log' : 'set-grid'}
+                    <div className="set-grid"
                       style={{ marginBottom: 5, paddingBottom: 5, borderBottom: '1px solid var(--border)' }}>
                       <div style={colHdr}>#</div>
-                      {ex._target && <div style={colHdr}>Target</div>}
                       <div style={colHdr}>Reps</div>
                       <div style={colHdr}>Load</div>
                       <div style={colHdr}>RPE</div>
@@ -1866,17 +1879,11 @@
                   {/* Set rows */}
                   {ex.sets.map((s, si) => {
                     const hit = setHit(s, ex._target);
-                    const tgt = ex._target
-                      ? [ex._target.reps, ex._target.load, ex._target.rpe].filter(Boolean).join('·')
-                      : null;
                     return (
-                      <div key={si} className={ex._target ? 'set-grid-log' : 'set-grid'}>
+                      <div key={si} className="set-grid">
                         <div className="set-num" style={{ color: hit === true ? 'var(--success)' : hit === false ? 'var(--danger)' : 'var(--muted2)' }}>
                           {si + 1}
                         </div>
-                        {ex._target && (
-                          <div className="set-tgt">{tgt || '—'}</div>
-                        )}
                         <input className="set-input" type="text" inputMode="decimal" value={s.reps}
                           onChange={e => updateSet(i, si, 'reps', e.target.value)} placeholder="—" />
                         <input className="set-input" type="text" inputMode="decimal" value={s.load}
