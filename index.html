@@ -15,22 +15,26 @@
 
     /* ─── Design Tokens ─── */
     :root {
-      --bg:          #1A1A1A;
-      --surface:     #232120;
-      --surface2:    #2C2A28;
-      --surface3:    #373432;
-      --text:        #F0EDE8;
-      --muted:       #A09890;
-      --muted2:      #635E59;
+      --bg:          #161514;
+      --surface:     #201E1C;
+      --surface2:    #282522;
+      --surface3:    #333028;
+      --text:        #F2EEE8;
+      --muted:       #9E9488;
+      --muted2:      #5E5850;
       --accent:      #E07B39;
-      --accent-glow: rgba(224, 123, 57, 0.28);
-      --accent-dim:  rgba(224, 123, 57, 0.12);
-      --success:     #6B8F6E;
-      --success-dim: rgba(107, 143, 110, 0.15);
-      --danger:      #BF5048;
+      --accent-glow: rgba(224, 123, 57, 0.32);
+      --accent-dim:  rgba(224, 123, 57, 0.13);
+      --success:     #6B9E6F;
+      --success-dim: rgba(107, 158, 111, 0.15);
+      --danger:      #C25249;
       --warning:     #D4A843;
-      --border:      rgba(255, 255, 255, 0.07);
+      --border:      rgba(255, 255, 255, 0.08);
       --border2:     rgba(255, 255, 255, 0.04);
+      --rim:         rgba(255, 255, 255, 0.06);
+      --shadow-sm:   0 2px 8px rgba(0,0,0,0.32);
+      --shadow-md:   0 4px 20px rgba(0,0,0,0.4);
+      --shadow-lg:   0 8px 40px rgba(0,0,0,0.5);
       --sans:        'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       --mono:        'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
       --radius:      14px;
@@ -95,6 +99,7 @@
       background: var(--surface); border-radius: var(--radius);
       padding: 18px; margin-bottom: 14px;
       border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
       animation: fadeIn 0.22s ease;
     }
 
@@ -109,18 +114,24 @@
 
     /* ─── Buttons ─── */
     .btn {
-      background: var(--accent); color: white;
+      background: linear-gradient(160deg, #EB8447 0%, #D06520 100%);
+      color: white;
       border: none; border-radius: var(--radius-sm);
       padding: 13px 18px; font-size: 14px; font-weight: 700;
       font-family: var(--sans); cursor: pointer;
       display: inline-block; white-space: nowrap;
       letter-spacing: 0.1px;
-      transition: opacity 0.15s ease, transform 0.1s ease;
+      box-shadow: 0 3px 14px rgba(224,123,57,0.28), inset 0 1px 0 rgba(255,255,255,0.15);
+      transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
     }
-    .btn:active { opacity: 0.82; transform: scale(0.97); }
-    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-danger { background: var(--danger); }
-    .btn-success { background: var(--success); }
+    .btn:active { opacity: 0.88; transform: scale(0.97); box-shadow: 0 1px 6px rgba(224,123,57,0.2); }
+    .btn-secondary {
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
+    }
+    .btn-danger { background: linear-gradient(160deg, #CB5A51 0%, #A83E36 100%); box-shadow: 0 3px 12px rgba(194,82,73,0.28), inset 0 1px 0 rgba(255,255,255,0.12); }
+    .btn-success { background: linear-gradient(160deg, #74A977 0%, #558A58 100%); box-shadow: 0 3px 12px rgba(107,158,111,0.28), inset 0 1px 0 rgba(255,255,255,0.12); }
     .btn-small { padding: 9px 13px; font-size: 13px; }
     .btn-block { width: 100%; display: block; margin: 12px 0; text-align: center; }
 
@@ -130,11 +141,12 @@
       border: 1px solid var(--border); border-radius: var(--radius-sm);
       padding: 13px 14px; font-size: 14px; font-family: var(--sans);
       margin-bottom: 12px; -webkit-appearance: none;
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.25);
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
     .input:focus {
       outline: none; border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-dim);
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.25), 0 0 0 3px var(--accent-dim);
     }
     .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
     .input-row input { flex: 1; }
@@ -142,8 +154,11 @@
     /* ─── Nav Bar ─── */
     .nav-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
+      background: rgba(22, 21, 20, 0.84);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border-top: 1px solid rgba(255,255,255,0.09);
+      box-shadow: 0 -1px 0 rgba(0,0,0,0.4);
       display: flex; justify-content: space-around; align-items: center;
       height: max(64px, 64px + env(safe-area-inset-bottom));
       z-index: 100;
@@ -156,9 +171,17 @@
       font-size: 9px; font-weight: 700; color: var(--muted2);
       border: none; background: none; font-family: var(--sans);
       text-transform: uppercase; letter-spacing: 0.6px;
+      position: relative;
       transition: color 0.15s ease;
     }
     .nav-item.active { color: var(--accent); }
+    .nav-item.active::before {
+      content: '';
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 24px; height: 2.5px; border-radius: 0 0 3px 3px;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
     .nav-icon { font-size: 19px; }
 
     /* ─── Exercise Items ─── */
@@ -166,6 +189,7 @@
       background: var(--surface2); border-radius: var(--radius);
       padding: 16px; margin-bottom: 10px;
       border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
       animation: fadeIn 0.2s ease;
     }
     .exercise-name {
@@ -189,12 +213,13 @@
     }
     .field-input {
       background: var(--surface3); color: var(--text);
-      border: 1px solid transparent; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.05); border-radius: 6px;
       padding: 7px 8px; font-size: 13px; font-family: var(--mono);
       -webkit-appearance: none; width: 100%;
-      transition: border-color 0.15s ease;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-    .field-input:focus { outline: none; border-color: var(--accent); }
+    .field-input:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 1px 3px rgba(0,0,0,0.15), 0 0 0 2px var(--accent-dim); }
 
     /* ─── Progress Bars ─── */
     .progress-bar {
@@ -203,11 +228,11 @@
       overflow: hidden; margin: 10px 0;
     }
     .progress-fill {
-      height: 100%; background: var(--accent); border-radius: 6px;
+      height: 100%; background: linear-gradient(90deg, var(--accent), #EB8447); border-radius: 6px;
       transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 0 10px var(--accent-glow), 0 0 4px var(--accent-glow);
+      box-shadow: 0 0 12px var(--accent-glow), 0 0 4px var(--accent-glow);
     }
-    .progress-fill.success { background: var(--success); box-shadow: 0 0 10px rgba(107,143,110,0.4); }
+    .progress-fill.success { background: linear-gradient(90deg, var(--success), #74A977); box-shadow: 0 0 10px rgba(107,158,111,0.4); }
 
     /* ─── Stats Grid ─── */
     .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -215,6 +240,7 @@
       background: var(--surface2); border-radius: var(--radius);
       padding: 18px 14px; text-align: center;
       border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
     }
     .stat-value {
       font-size: 30px; font-weight: 800; margin-bottom: 4px;
@@ -234,6 +260,7 @@
     .history-session {
       background: var(--surface2); border-radius: var(--radius);
       padding: 14px; margin-bottom: 8px; border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
     }
     .session-day { font-weight: 700; font-size: 14px; margin-bottom: 4px; letter-spacing: -0.2px; }
     .session-details { font-size: 12px; color: var(--muted); }
@@ -271,7 +298,11 @@
       padding: 12px 16px;
       padding-top: max(14px, env(safe-area-inset-top));
       border-bottom: 1px solid var(--border);
-      background: var(--surface); flex-shrink: 0;
+      background: rgba(22, 21, 20, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 1px 16px rgba(0,0,0,0.35);
+      flex-shrink: 0;
     }
     .editor-title { flex: 1; font-size: 17px; font-weight: 700; letter-spacing: -0.4px; }
     .back-btn {
@@ -293,13 +324,15 @@
     .plan-row {
       background: var(--surface); border-radius: var(--radius);
       padding: 16px; margin-bottom: 12px;
-      border: 2px solid var(--border);
+      border: 1px solid var(--border);
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      transition: border-color 0.2s ease;
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .plan-row.is-active {
-      border-color: var(--accent);
-      background: linear-gradient(135deg, var(--surface) 0%, #281E16 100%);
+      border-color: rgba(224,123,57,0.5);
+      background: linear-gradient(135deg, var(--surface) 0%, #261A0E 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 20px rgba(224,123,57,0.14);
     }
     .plan-info { flex: 1; min-width: 150px; }
     .plan-name { font-weight: 700; font-size: 16px; margin-bottom: 4px; letter-spacing: -0.3px; }
@@ -336,6 +369,7 @@
       padding: 13px; margin-bottom: 8px;
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
     }
     .template-info { flex: 1; min-width: 120px; }
     .template-name { font-weight: 600; font-size: 14px; letter-spacing: -0.2px; }
@@ -353,6 +387,7 @@
     .form-section {
       background: var(--surface2); border-radius: var(--radius);
       padding: 16px; margin-bottom: 16px; border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
     }
     .form-section-title {
       font-weight: 700; font-size: 10px; margin-bottom: 14px;
@@ -383,7 +418,8 @@
       max-height: 78vh; display: flex; flex-direction: column;
       padding-bottom: max(16px, env(safe-area-inset-bottom));
       animation: slideUp 0.3s cubic-bezier(0.32, 1.16, 0.6, 1);
-      border-top: 1px solid var(--border);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 -8px 48px rgba(0,0,0,0.55), inset 0 1px 0 var(--rim);
     }
     .picker-handle {
       width: 36px; height: 4px; background: var(--surface3);
@@ -445,7 +481,10 @@
 
     /* ─── Quick Workout ─── */
     .qw-timer-bar {
-      background: var(--surface); border-bottom: 1px solid var(--border);
+      background: rgba(22, 21, 20, 0.9);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 16px rgba(0,0,0,0.3);
       padding: 14px 20px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: space-between;
     }
@@ -502,12 +541,13 @@
     }
     .set-input {
       background: var(--surface3); color: var(--text);
-      border: 1px solid transparent; border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 5px;
       padding: 6px 7px; font-size: 13px; font-family: var(--mono);
       -webkit-appearance: none; width: 100%;
-      transition: border-color 0.12s ease;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+      transition: border-color 0.12s ease, box-shadow 0.12s ease;
     }
-    .set-input:focus { outline: none; border-color: var(--accent); }
+    .set-input:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 0 0 2px var(--accent-dim); }
     .set-remove-btn {
       background: none; border: none; color: var(--muted);
       font-size: 16px; cursor: pointer; padding: 2px 4px; line-height: 1;
@@ -523,6 +563,7 @@
     .detail-exercise {
       background: var(--surface2); border-radius: var(--radius);
       padding: 16px; margin-bottom: 10px; border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 var(--rim), var(--shadow-sm);
     }
     .detail-exercise-name {
       font-weight: 700; font-size: 15px; margin-bottom: 12px; letter-spacing: -0.3px;
@@ -1868,10 +1909,10 @@
                       {/* Target row */}
                       <div className="set-grid-tbl" style={{ marginBottom: ex._target.notes ? 3 : 8 }}>
                         <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Target</div>
-                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--fg)' }}>{ex._target.sets || '—'}</div>
-                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--fg)' }}>{ex._target.reps || '—'}</div>
-                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--fg)' }}>{ex._target.load || '—'}</div>
-                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--fg)' }}>{ex._target.rpe || '—'}</div>
+                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text)' }}>{ex._target.sets || '—'}</div>
+                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text)' }}>{ex._target.reps || '—'}</div>
+                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text)' }}>{ex._target.load || '—'}</div>
+                        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text)' }}>{ex._target.rpe || '—'}</div>
                         <div />
                       </div>
                       {ex._target.notes && (
